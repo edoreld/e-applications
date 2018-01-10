@@ -29,7 +29,7 @@ function getFibonacciNumberAtIndex (index) {
 
 // Unoptimized recursive function
 function getFibonnaciRecursive (index) {
-	if (index == 1 || index == 2) {
+	if (index <= 2) {
 		return 1;
 	}
 
