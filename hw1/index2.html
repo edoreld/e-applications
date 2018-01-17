@@ -10,18 +10,18 @@
 	Tic-Tac-Toe <br />
 	<script type="text/javascript"> 
 
-		squirrel = '<img width="20px" height="20px" src="./squirrel.png" alt="squirrel"></img>';
-		snake = '<img width="20px" height="20px" src="./snake.png" alt="snake"></img>';
+		var squirrel = '<img width="20px" height="20px" src="./squirrel.png" alt="squirrel"></img>';
+		var snake = '<img width="20px" height="20px" src="./snake.png" alt="snake"></img>';
 
-		activePlayer = 1; // 0 or 1
-		gameFinished = 0;
+		var activePlayer = 1; // 0 or 1
+		var gameFinished = 0;
 		
-		board = [
+		var board = [
 		[0, 0, 0],
 		[0, 0, 0],
 		[0, 0, 0]
 		];
-		boardSize = 3;
+		var boardSize = 3;
 
 		function winCondition() {
 			document.getElementById("player-won").innerHTML = "Player " + activePlayer + " won!";

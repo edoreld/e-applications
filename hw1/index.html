@@ -9,18 +9,18 @@
 <body>
 	<script type="text/javascript"> 
 		function reset() {
-			display = document.getElementById("display");
+			var display = document.getElementById("display");
 			display.innerHTML = '';
 		}
 
 		function add(e) {
-			display = document.getElementById("display"); 
+			var display = document.getElementById("display"); 
 			display.innerHTML = display.innerHTML + e;
 
 		}
 
 		function calculate() {
-			display = document.getElementById("display"); 
+			var display = document.getElementById("display"); 
 			display.innerHTML = eval(display.innerHTML);
 
 		}
