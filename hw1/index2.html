@@ -26,7 +26,13 @@
 		var boardSize = 3;
 
 		function winCondition() {
-			document.getElementById("player-won").innerHTML = "Player " + activePlayer + " won!";
+			var finalMessage;
+			if (activePlayer == 1) {
+				finalMessage = "The squirrels single-handedly defeated the snakes. Well done!"
+			} else {
+				finalMessage = "The snakes are victorious. Congratulations!"
+			}
+			document.getElementById("player-won").innerHTML = finalMessage;
 			gameFinished = 1;
 		}
 		function setValue(id, row, col) {
@@ -117,7 +123,7 @@
 		}
 
 		function setGameIsADraw() {
-			document.getElementById("who-plays-now").innerHTML = "The game is a draw. The squirrels and the snakes are now locked in an eternal struggle. You better click on that clear button...";
+			document.getElementById("who-plays-now").innerHTML = "The game is a draw. The squirrels and the snakes are now locked in an eternal struggle. You better click on reset button...";
 		}
 
 </script>
