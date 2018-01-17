@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title> Tic-Tac-Toe </title>
+	<meta charset="UTF-8">
+</head>
+
+<body>
+	Tic-Tac-Toe <br />
+	<script type="text/javascript"> 
+
+		squirrel = '<img width="20px" height="20px" src="./squirrel.png" alt="squirrel"></img>';
+		snake = '<img width="20px" height="20px" src="./snake.png" alt="snake"></img>';
+
+		activePlayer = 1; // 0 or 1
+		gameFinished = 0;
+		
+		board = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+		];
+		boardSize = 3;
+
+		function winCondition() {
+			document.getElementById("player-won").innerHTML = "Player " + activePlayer + " won!";
+			gameFinished = 1;
+		}
+		function setValue(id, row, col) {
+			if (gameFinished == 1) {
+				return;
+			}
+			if (board[row][col] == 0) {
+				if (activePlayer == 1) {
+					piece = "x";
+					
+				}
+				else {
+					piece = "o";
+				}
+				board[row][col] = piece;
+				pressedCell = document.getElementById(id);
+				pressedCell.innerHTML = board[row][col] == "x" ? squirrel : snake ;
+
+				// check the row where a piece has been changed
+				for (i = 0; i < boardSize; i++) {
+					if (board[row][i] != piece) {
+						break;
+					}
+					if (i == boardSize - 1) {
+						winCondition();
+					}
+				}
+
+				// check the column where a piece has been changed
+				for (i = 0; i < boardSize; i++) {
+					if (board[i][col] != piece) {
+						break;
+					}
+					if (i == boardSize - 1) {
+						winCondition();
+					}
+				}
+
+				// check the diagonal
+				if (row == col) {
+					for (i = 0 ; i < boardSize; i++) {
+						if (board[i][i] != piece ) {
+							break;
+						}
+						if (i == boardSize - 1) {
+							winCondition();
+						}
+					}
+				}
+
+				// check the backward diagonal
+				if (row + col == boardSize - 1) {
+					for (i = 0 ; i < boardSize; i++) {
+						if (board[i][(boardSize -1) - i] != piece) {
+							break;
+						}
+						if (i == boardSize - 1) {
+							winCondition();
+						}
+					}
+				}
+				activePlayer = activePlayer == 1 ? 2 : 1;
+
+			}
+		}
+
+		function resetBoard() {
+			gameFinished = 0;
+			counter = 1;
+			for (i = 0 ; i < boardSize ; i++) {
+				for (j = 0; j < boardSize; j++) {
+					board[i][j] = "";
+					document.getElementById(counter++).innerHTML = "";
+				}
+			}
+			document.getElementById("player-won").innerHTML = "";
+			activePlayer = 1;
+		}		
+
+</script>
+
+<table border="1" ">
+	<tr style="text-align: center;">
+		<td id="1" width="20px" height="20px" onclick="setValue(1, 0, 0)">  </td>
+		<td id="2" width="20px" height="20px" onclick="setValue(2, 0, 1)">  </td>
+		<td id="3" width="20px" height="20px" onclick="setValue(3, 0, 2)">  </td>
+	</tr>
+	<tr style="text-align: center;">
+		<td id="4" width="20px" height="20px" onclick="setValue(4, 1, 0)">  </td>
+		<td id="5" width="20px" height="20px" onclick="setValue(5, 1, 1)">  </td>
+		<td id="6" width="20px" height="20px" onclick="setValue(6, 1, 2)">  </td>
+	</tr>
+	<tr style="text-align: center;">
+		<td id="7" width="20px" height="20px" onclick="setValue(7, 2, 0)">  </td>
+		<td id="8" width="20px" height="20px" onclick="setValue(8, 2, 1)">  </td>
+		<td id="9" width="20px" height="20px" onclick="setValue(9, 2, 2)">  </td>
+	</tr>
+</table>
+
+<button id="reset-board" value="Reset Board" onclick="resetBoard()">Reset Board </button>
+
+<hr />
+<div id="player-won"></div>
+
+
+</body>
+
+</html>
