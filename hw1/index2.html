@@ -7,13 +7,15 @@
 </head>
 
 <body>
-	Tic-Tac-Toe <br />
+	<h1>Tic-Tac-Toe</h1>
+	<div id="who-plays-now"> Player 1's turn </div>
 	<script type="text/javascript"> 
 
 		var squirrel = '<img width="20px" height="20px" src="./squirrel.png" alt="squirrel"></img>';
 		var snake = '<img width="20px" height="20px" src="./snake.png" alt="snake"></img>';
+		var numPlays = 0;
 
-		var activePlayer = 1; // 0 or 1
+		var activePlayer = 1; // 1 or 2
 		var gameFinished = 0;
 		
 		var board = [
@@ -87,7 +89,11 @@
 					}
 				}
 				activePlayer = activePlayer == 1 ? 2 : 1;
-
+				if (++numPlays < 9) {
+					setWhosePlayerPlaysText();
+				} else {
+					setGameIsADraw();
+				}
 			}
 		}
 
@@ -102,7 +108,17 @@
 			}
 			document.getElementById("player-won").innerHTML = "";
 			activePlayer = 1;
+			setWhosePlayerPlaysText(1);
+			numPlays = 0;
 		}		
+
+		function setWhosePlayerPlaysText(playerID) {
+			document.getElementById("who-plays-now").innerHTML = "Player " + activePlayer + "'s turn";
+		}
+
+		function setGameIsADraw() {
+			document.getElementById("who-plays-now").innerHTML = "The game is a draw. The squirrels and the snakes are now locked in an eternal struggle. You better click on that clear button...";
+		}
 
 </script>
 
