@@ -4,8 +4,27 @@
 <head>
 	<title> Tic-Tac-Toe </title>
 	<meta charset="UTF-8">
-</head>
+	<style>
+	
+	body {
+		max-width: 480px;
+		margin: 0 auto
+	}
+	table {
+		border: 2px solid #36006f
+	}
+	td {
+		width: 50px;
+		height: 50px;
+		background-color: white
+	}
 
+	td:hover {
+		background-color: #80d8df
+	}
+	
+	</style>
+</head>
 <body>
 	<h1>Tic-Tac-Toe</h1>
 	<div id="who-plays-now"> Player 1's turn </div>
@@ -28,9 +47,9 @@
 		function winCondition() {
 			var finalMessage;
 			if (activePlayer == 1) {
-				finalMessage = "The squirrels single-handedly defeated the snakes. Well done!"
+				finalMessage = "<br />The squirrels single-handedly defeated the snakes. Well done!"
 			} else {
-				finalMessage = "The snakes are victorious. Congratulations!"
+				finalMessage = "<br />The snakes are victorious. Congratulations!"
 			}
 			document.getElementById("player-won").innerHTML = finalMessage;
 			gameFinished = 1;
@@ -97,7 +116,7 @@
 				activePlayer = activePlayer == 1 ? 2 : 1;
 				if (++numPlays < 9) {
 					setWhosePlayerPlaysText();
-				} else {
+				} else if (!gameFinished) {
 					setGameIsADraw();
 				}
 			}
@@ -123,33 +142,34 @@
 		}
 
 		function setGameIsADraw() {
-			document.getElementById("who-plays-now").innerHTML = "The game is a draw. The squirrels and the snakes are now locked in an eternal struggle. You better click on reset button...";
+			document.getElementById("who-plays-now").innerHTML = "<br />The game is a draw. The squirrels and the snakes are now locked in an eternal struggle. You better click on reset button...";
 		}
 
 </script>
 
-<table border="1" ">
+<div id="wrapper">
+	<table border="1 ">
 	<tr style="text-align: center;">
-		<td id="1" width="20px" height="20px" onclick="setValue(1, 0, 0)">  </td>
-		<td id="2" width="20px" height="20px" onclick="setValue(2, 0, 1)">  </td>
-		<td id="3" width="20px" height="20px" onclick="setValue(3, 0, 2)">  </td>
+		<td id="1" onclick="setValue(1, 0, 0)">  </td>
+		<td id="2" onclick="setValue(2, 0, 1)">  </td>
+		<td id="3" onclick="setValue(3, 0, 2)">  </td>
 	</tr>
 	<tr style="text-align: center;">
-		<td id="4" width="20px" height="20px" onclick="setValue(4, 1, 0)">  </td>
-		<td id="5" width="20px" height="20px" onclick="setValue(5, 1, 1)">  </td>
-		<td id="6" width="20px" height="20px" onclick="setValue(6, 1, 2)">  </td>
+		<td id="4" onclick="setValue(4, 1, 0)">  </td>
+		<td id="5" onclick="setValue(5, 1, 1)">  </td>
+		<td id="6" onclick="setValue(6, 1, 2)">  </td>
 	</tr>
 	<tr style="text-align: center;">
-		<td id="7" width="20px" height="20px" onclick="setValue(7, 2, 0)">  </td>
-		<td id="8" width="20px" height="20px" onclick="setValue(8, 2, 1)">  </td>
-		<td id="9" width="20px" height="20px" onclick="setValue(9, 2, 2)">  </td>
+		<td id="7" onclick="setValue(7, 2, 0)">  </td>
+		<td id="8" onclick="setValue(8, 2, 1)">  </td>
+		<td id="9" onclick="setValue(9, 2, 2)">  </td>
 	</tr>
 </table>
 
 <button id="reset-board" value="Reset Board" onclick="resetBoard()">Reset Board </button>
 
-<hr />
 <div id="player-won"></div>
+</div>
 
 
 </body>
