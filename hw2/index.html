@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Pong</title>
+	<script type="text/javascript" src="logic.js"></script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<canvas id="canvas" width="500" height="500" style="border:1px solid #000000;">
+		Your browser does not support the HTML5 canvas tag.
+	</canvas>
+	<br />
+	<div><button onclick="vsBot()">Play against the AI</button></div>
+	<div><button onclick="vsHuman()">Play 1 vs 1 </button></div>
+	<table>
+		<tr>
+			<td>Player 1 score</td>
+			<td id="player2-score">0</td>
+		</tr>
+		<tr>
+			<td>Player 2 score</td>
+			<td id="player1-score">0</td>
+		</tr>
+		<tr>
+			<td>Ball speed</td>
+			<td id="ball-speed">1</td>
+		</tr>
+
+	</table>
+
+</body>
+</html>
