@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Drawing Program</title>
+	<script src="logic.js"></script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script src="jscolor.min.js"></script>
+
+
+</head>
+<body>
+	<table>
+		<tbody>
+			<tr>
+				<th> Canvas</th>
+				<th> Tools </th>
+			</tr>
+			<tr>
+				<td rowspan="4" style="border: 1px;">
+					<canvas id="canvas" width="400" height="400">
+						Your browser does not support the HTML5 canvas tag.
+					</canvas>
+				</td>
+				<td>
+					<input type="radio" name="tool" value="pencil" onclick='setPencilMode();'>Pencil<br>
+					<input type="radio" name="tool" value="line" onclick='setLineMode();'>Line<br>
+					<input type="radio" name="tool" value="rectangle" onclick='setRectangleMode();'>Rectangle<br>
+					<input type="radio" name="tool" value="circle" onclick='setCircleMode();'>Circle<br>
+				</td>
+			</tr>
+			<tr>
+				<td>Color: <input id="selected-color" class="jscolor" value="ab2567"></td>
+			</tr>
+			<tr>
+			<td>
+				Thickness: <br /> <input id="thickness" type="text" name="Thickness" value="3" readonly><br>
+				<button id="increase-thickness" onclick="brush.updateThickness();">-</button>
+				<button id="decrease-thickness" onclick="brush.updateThickness();">+</button>
+			</td>
+			<tr>
+				<td><button id="clear-canvas" value="Clear" onclick="clearCanvas();">Clear</button></td>
+			</tr>
+		</tbody>
+	</table>
+</body>
+</html>
