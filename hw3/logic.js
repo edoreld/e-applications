@@ -1,6 +1,5 @@
 var s;
 var tool;
-var brush;
 
 /* UNDO */
 
@@ -23,12 +22,10 @@ function Pencil() {
 }
 
 Pencil.prototype.draw = function(x, y) {
-	s.ctx.beginPath();
-	s.ctx.arc(x, y, getThickness(), 0, Math.PI * 2);
-	s.ctx.fillStyle = getColor();
-	s.ctx.fill();
+	s.ctx.lineWidth = getThickness();
 	s.ctx.strokeStyle = getColor();
-	s.ctx.stroke();
+	s.ctx.fillStyle = getColor();
+	s.ctx.strokeRect(x, y, getThickness(), getThickness());
 };
 
 Pencil.prototype.handleInput = function() {
@@ -232,6 +229,10 @@ function setCircleMode() {
 	tool = new Tool(new Circle());
 }
 
+function modifyThickness(value) {
+	document.getElementById('thickness').value = parseInt(document.getElementById('thickness').value) + value;
+}
+
 /* ELEMENT GETTERS */
 function getColor() {
 	return "#" + document.getElementById("selected-color").value;
@@ -243,4 +244,5 @@ function getThickness() {
 
 window.onload = function(e) {
 	s = new CanvasState(document.getElementById("canvas"));
+	setPencilMode();
 };

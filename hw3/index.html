@@ -23,7 +23,7 @@
 					</canvas>
 				</td>
 				<td>
-					<input type="radio" name="tool" value="pencil" onclick='setPencilMode();'>Pencil<br>
+					<input type="radio" name="tool" value="pencil" checked="checked" onclick='setPencilMode();'>Pencil<br>
 					<input type="radio" name="tool" value="line" onclick='setLineMode();'>Line<br>
 					<input type="radio" name="tool" value="rectangle" onclick='setRectangleMode();'>Rectangle<br>
 					<input type="radio" name="tool" value="circle" onclick='setCircleMode();'>Circle<br>
@@ -35,8 +35,8 @@
 			<tr>
 			<td>
 				Thickness: <br /> <input id="thickness" type="text" name="Thickness" value="3" readonly><br>
-				<button id="increase-thickness" onclick="brush.updateThickness();">-</button>
-				<button id="decrease-thickness" onclick="brush.updateThickness();">+</button>
+				<button id="decrease-thickness" onclick="modifyThickness(-1);">-</button>
+				<button id="increase-thickness" onclick="modifyThickness(1);">+</button>
 			</td>
 			<tr>
 				<td><button id="clear-canvas" value="Clear" onclick="clearCanvas();">Clear</button></td>
