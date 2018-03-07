@@ -1,4 +1,4 @@
-var s;
+var oc,s;
 var tool;
 
 /* UNDO */
@@ -19,22 +19,31 @@ Tool.prototype.draw = function(x, y) {
 
 /* PENCIL */
 function Pencil() {
+	var oldX;
+	var oldY;
 }
 
 Pencil.prototype.draw = function(x, y) {
+	s.ctx.beginPath();
 	s.ctx.lineWidth = getThickness();
 	s.ctx.strokeStyle = getColor();
-	s.ctx.fillStyle = getColor();
-	s.ctx.strokeRect(x, y, getThickness(), getThickness());
+	s.ctx.moveTo(x, y);
+	s.ctx.lineTo(this.oldX, this.oldY)
+	s.ctx.stroke();
+	s.ctx.closePath();
 };
 
 Pencil.prototype.handleInput = function() {
 
 	var x, y;
+
 	var mouseDown = false;
 
 	s.canvas.onmousedown = function(e) {
-
+		x = e.clientX - s.x;
+		y = e.clientY - s.y;
+		tool.tool.oldX = x;
+		tool.tool.oldY = y;
 		mouseDown = true;
 	};
 
@@ -43,11 +52,19 @@ Pencil.prototype.handleInput = function() {
 			// Mouse coordinates are relative to the window, not the canvas!
 			x = e.clientX - s.x;
 			y = e.clientY - s.y;
-			tool.tool.draw(x, y);
+
+			// tool.draw(x, y);
+			tool.draw(x, y);
+
+			tool.tool.oldX = x;
+			tool.tool.oldY = y;
+
 		}
 	};
 
 	s.canvas.onmouseup = function(e) {
+		x = e.clientX - s.x;
+		y = e.clientY - s.y;
 		mouseDown = false;
 	};
 };
@@ -208,7 +225,7 @@ CanvasState.prototype.clear = function() {
 
 
 function clearCanvas() {
-	s.clear();
+	s.ctx.putImageData(oc, 0, 0);
 }
 
 /* TOOL MODES SETTING */
@@ -229,10 +246,6 @@ function setCircleMode() {
 	tool = new Tool(new Circle());
 }
 
-function modifyThickness(value) {
-	document.getElementById('thickness').value = parseInt(document.getElementById('thickness').value) + value;
-}
-
 /* ELEMENT GETTERS */
 function getColor() {
 	return "#" + document.getElementById("selected-color").value;
@@ -242,7 +255,17 @@ function getThickness() {
 	return document.getElementById("thickness").value;
 }
 
+function modifyThickness(value) {
+	document.getElementById('thickness').value = parseInt(document.getElementById('thickness').value) + value;
+}
+
 window.onload = function(e) {
 	s = new CanvasState(document.getElementById("canvas"));
+	oc = s.ctx.getImageData(0, 0, s.width, s.height);
+
 	setPencilMode();
 };
+
+// window.onmousemove = function(e) {
+// 	// console.log('X: ' + (Number) (e.clientX - s.x) + ', Y:' + (Number) (e.clientY - s.y));
+// }
