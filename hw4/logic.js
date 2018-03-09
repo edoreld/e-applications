@@ -1,5 +1,6 @@
 var oc,s;
 var tool;
+var saves = [], saveIndex = -1;
 
 /* UNDO */
 
@@ -66,6 +67,7 @@ Pencil.prototype.handleInput = function() {
 		x = e.clientX - s.x;
 		y = e.clientY - s.y;
 		mouseDown = false;
+		saveImage();
 	};
 };
 
@@ -110,6 +112,7 @@ Line.prototype.handleInput = function() {
 
 	s.canvas.onmouseup = function(e) {
 		drawingPath = false;
+		saveImage();
 	};
 };
 
@@ -151,6 +154,7 @@ Rectangle.prototype.handleInput = function() {
 
 	s.canvas.onmouseup = function(e) {
 		drawingSquare = false;
+		saveImage();
 	};
 };
 
@@ -205,6 +209,7 @@ Circle.prototype.handleInput = function() {
 
 	s.canvas.onmouseup = function(e) {
 		drawingSquare = false;
+		saveImage();
 	};
 };
 
@@ -224,10 +229,6 @@ CanvasState.prototype.clear = function() {
 };
 
 
-function clearCanvas() {
-	s.ctx.putImageData(oc, 0, 0);
-}
-
 /* TOOL MODES SETTING */
 
 function setPencilMode() {
@@ -244,6 +245,39 @@ function setRectangleMode() {
 
 function setCircleMode() {
 	tool = new Tool(new Circle());
+}
+
+/* UTILS */
+
+function clearCanvas() {
+	s.ctx.putImageData(oc, 0, 0);
+}
+
+/* SAVE IMAGES */
+
+function saveImage() {
+	saveIndex++;
+	saves[saveIndex] = s.ctx.getImageData(0, 0, s.width, s.height);
+}
+
+function loadImage(index) {
+	s.ctx.putImageData(saves[index], 0, 0);
+}
+
+function undo() {
+	if (saveIndex == 0) {
+		clearCanvas();
+	} else {
+		loadImage(saveIndex - 1);
+	}
+
+	saveIndex--;
+}
+
+function redo() {
+	if (saveIndex < saves.length - 1) {
+		loadImage(++saveIndex);
+	}
 }
 
 /* ELEMENT GETTERS */
