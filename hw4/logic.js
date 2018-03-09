@@ -232,12 +232,13 @@ CanvasState.prototype.clear = function() {
 
 function SaveManager() {
 	this.saves = [];
-	this.saveIndex = -1;
+	this.saveIndex = 0;
 }
 
 SaveManager.prototype.save = function() {
 	this.saveIndex++;
 	this.saves[this.saveIndex] = s.ctx.getImageData(0, 0, s.width, s.height);
+	this.saves = this.saves.slice(0, this.saveIndex + 1);
 };
 
 SaveManager.prototype.load = function(index) {
@@ -245,13 +246,11 @@ SaveManager.prototype.load = function(index) {
 }
 
 SaveManager.prototype.undo = function undo() {
-	if (this.saveIndex == 0) {
-		clearCanvas();
-	} else {
+	if (this.saveIndex > 0)
+	{
 		this.load(this.saveIndex - 1);
+		this.saveIndex--;
 	}
-
-	this.saveIndex--;
 }
 
 SaveManager.prototype.redo = function redo() {
@@ -259,9 +258,6 @@ SaveManager.prototype.redo = function redo() {
 		this.load(++this.saveIndex);
 	}
 }
-
-
-
 
 /* TOOL MODES SETTING */
 
@@ -302,8 +298,8 @@ function modifyThickness(value) {
 
 window.onload = function(e) {
 	s = new CanvasState(document.getElementById("canvas"));
-	oc = s.ctx.getImageData(0, 0, s.width, s.height);
 	sm = new SaveManager();
+	sm.saves[0] = s.ctx.getImageData(0, 0, s.width, s.height);
 	setPencilMode();
 };
 
