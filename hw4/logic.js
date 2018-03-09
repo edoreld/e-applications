@@ -1,6 +1,6 @@
 var oc,s;
 var tool;
-var saves = [], saveIndex = -1;
+var sm;
 
 /* UNDO */
 
@@ -67,7 +67,7 @@ Pencil.prototype.handleInput = function() {
 		x = e.clientX - s.x;
 		y = e.clientY - s.y;
 		mouseDown = false;
-		saveImage();
+		sm.save();
 	};
 };
 
@@ -112,7 +112,7 @@ Line.prototype.handleInput = function() {
 
 	s.canvas.onmouseup = function(e) {
 		drawingPath = false;
-		saveImage();
+		sm.save();
 	};
 };
 
@@ -154,7 +154,7 @@ Rectangle.prototype.handleInput = function() {
 
 	s.canvas.onmouseup = function(e) {
 		drawingSquare = false;
-		saveImage();
+		sm.save();
 	};
 };
 
@@ -177,9 +177,9 @@ Circle.prototype.draw = function(anchorX, anchorY, x, y) {
 	// the circle
 	var radius = 0.70 * Math.sqrt((anchorX - x)*(anchorX - x) + (anchorY - y)*(anchorY - y));
 
- 	  s.ctx.beginPath();
-      s.ctx.arc(anchorX, anchorY, radius, 0, 2 * Math.PI);
-      s.ctx.stroke();
+	s.ctx.beginPath();
+	s.ctx.arc(anchorX, anchorY, radius, 0, 2 * Math.PI);
+	s.ctx.stroke();
 
 };
 
@@ -209,7 +209,7 @@ Circle.prototype.handleInput = function() {
 
 	s.canvas.onmouseup = function(e) {
 		drawingSquare = false;
-		saveImage();
+		sm.save();
 	};
 };
 
@@ -227,6 +227,40 @@ function CanvasState(canvas) {
 CanvasState.prototype.clear = function() {
 	s.ctx.clearRect(0, 0, this.width, this.height);
 };
+
+/* SAVE MANAGER */
+
+function SaveManager() {
+	this.saves = [];
+	this.saveIndex = -1;
+}
+
+SaveManager.prototype.save = function() {
+	this.saveIndex++;
+	this.saves[this.saveIndex] = s.ctx.getImageData(0, 0, s.width, s.height);
+};
+
+SaveManager.prototype.load = function(index) {
+	s.ctx.putImageData(this.saves[index], 0, 0);
+}
+
+SaveManager.prototype.undo = function undo() {
+	if (this.saveIndex == 0) {
+		clearCanvas();
+	} else {
+		this.load(this.saveIndex - 1);
+	}
+
+	this.saveIndex--;
+}
+
+SaveManager.prototype.redo = function redo() {
+	if (this.saveIndex < this.saves.length - 1) {
+		this.load(++this.saveIndex);
+	}
+}
+
+
 
 
 /* TOOL MODES SETTING */
@@ -253,33 +287,6 @@ function clearCanvas() {
 	s.ctx.putImageData(oc, 0, 0);
 }
 
-/* SAVE IMAGES */
-
-function saveImage() {
-	saveIndex++;
-	saves[saveIndex] = s.ctx.getImageData(0, 0, s.width, s.height);
-}
-
-function loadImage(index) {
-	s.ctx.putImageData(saves[index], 0, 0);
-}
-
-function undo() {
-	if (saveIndex == 0) {
-		clearCanvas();
-	} else {
-		loadImage(saveIndex - 1);
-	}
-
-	saveIndex--;
-}
-
-function redo() {
-	if (saveIndex < saves.length - 1) {
-		loadImage(++saveIndex);
-	}
-}
-
 /* ELEMENT GETTERS */
 function getColor() {
 	return "#" + document.getElementById("selected-color").value;
@@ -296,7 +303,7 @@ function modifyThickness(value) {
 window.onload = function(e) {
 	s = new CanvasState(document.getElementById("canvas"));
 	oc = s.ctx.getImageData(0, 0, s.width, s.height);
-
+	sm = new SaveManager();
 	setPencilMode();
 };
 
