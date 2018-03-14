@@ -2,7 +2,8 @@ var oc,s;
 var tool;
 var sm;
 var xml;
-var pic;
+
+
 
 /* UNDO */
 /* Works like the same feature in Photoshop */
@@ -44,16 +45,14 @@ Select.prototype.handleInput = function() {
 
 /* PENCIL */
 function Pencil() {
-	var oldX;
-	var oldY;
 }
 
-Pencil.prototype.draw = function(x, y) {
+Pencil.draw = function(oldX, oldY, x, y, color, thickness) {
 	s.ctx.beginPath();
-	s.ctx.lineWidth = getThickness();
-	s.ctx.strokeStyle = getColor();
+	s.ctx.strokeStyle = color;
+	s.ctx.lineWidth = thickness;
 	s.ctx.moveTo(x, y);
-	s.ctx.lineTo(this.oldX, this.oldY)
+	s.ctx.lineTo(oldX, oldY)
 	s.ctx.stroke();
 	s.ctx.closePath();
 };
@@ -61,28 +60,40 @@ Pencil.prototype.draw = function(x, y) {
 Pencil.prototype.handleInput = function() {
 
 	var x, y;
-
+	var i;
 	var mouseDown = false;
+	var oldX, oldY;
+	var color;
+	var thickness;
 
 	s.canvas.onmousedown = function(e) {
 		x = e.clientX - s.x;
 		y = e.clientY - s.y;
-		tool.tool.oldX = x;
-		tool.tool.oldY = y;
+		oldX = x;
+		oldY = y;
 		mouseDown = true;
+		i = 0;
+		color = getColor();
+		thickness = getThickness();
+		Pencil.draw(oldX, oldY, x, y, color, thickness);
+		xml.addPen(oldX, oldY, color, thickness);
+		xml.addPoint(i++, x, y);
 	};
 
 	s.canvas.onmousemove = function(e) {
 		if (mouseDown) {
-			// Mouse coordinates are relative to the window, not the canvas!
 			x = e.clientX - s.x;
 			y = e.clientY - s.y;
 
-			// tool.draw(x, y);
-			tool.draw(x, y);
+			xml.addPoint(i++, x, y);
+			// Mouse coordinates are relative to the window, not the canvas!
 
-			tool.tool.oldX = x;
-			tool.tool.oldY = y;
+
+			// tool.draw(x, y);
+			Pencil.draw(oldX, oldY, x, y, color, thickness);
+
+			oldX = x;
+			oldY = y;
 
 		}
 	};
@@ -136,6 +147,11 @@ Line.prototype.handleInput = function() {
 	s.canvas.onmouseup = function(e) {
 		drawingPath = false;
 		sm.save();
+		coord.x = e.clientX - s.x;
+		coord.y = e.clientY - s.y;
+
+
+		xml.addLine(anchor.x, anchor.y, getColor(), getThickness(), coord.x, coord.y);
 	};
 };
 
@@ -178,8 +194,13 @@ Rectangle.prototype.handleInput = function() {
 	s.canvas.onmouseup = function(e) {
 		drawingSquare = false;
 		// startX, startY, strokeStyle, lineWidth, endX, endY
-		pic.addRect(anchor.x, anchor.y, getColor(), getThickness(), coord.x, coord.y);
 		sm.save();
+
+		coord.x = e.clientX - s.x;
+		coord.y = e.clientY - s.y;
+
+
+		xml.addRect(anchor.x, anchor.y, getColor(), getThickness(), coord.x, coord.y);
 	};
 };
 
@@ -235,6 +256,12 @@ Circle.prototype.handleInput = function() {
 	s.canvas.onmouseup = function(e) {
 		drawingSquare = false;
 		sm.save();
+
+		coord.x = e.clientX - s.x;
+		coord.y = e.clientY - s.y;
+
+
+		xml.addCircle(anchor.x, anchor.y, getColor(), getThickness(), coord.x, coord.y);
 	};
 };
 
@@ -302,47 +329,52 @@ SaveManager.prototype.redo = function redo() {
 /* XML DOC */
 
 function documentXML() {
-	this.doc = document.getElementById("xml-user");
+	this.doc = document.getElementById("action-history");
+	this.xmlString = '';
+	this.xml = this.getXML();
 }
 
-documentXML.prototype.addAction  = function(type, startX, startY, strokeStyle, lineWidth, endX, endY )
-{
-	// :TODO
-	// Create action element (I)
-	var newAction = document.createElement("action");
-	var lineBreak = document.createElement("br");
+documentXML.prototype.getString = function(xml) {
+	serializer = new XMLSerializer();
+	return serializer.serializeToString(xml);
+};
 
-	// for (argument t : arguments) { add attribute to (I] with t.value }
-	newAction.setAttribute("type", type);
-	newAction.setAttribute("startX", startX);
-	newAction.setAttribute("startY", startY);
-	newAction.setAttribute("strokeStyle", strokeStyle);
-	newAction.setAttribute("lineWidth", lineWidth);
+documentXML.prototype.getXML = function(){
+	var parser = new DOMParser();
+	return parser.parseFromString(this.xmlString, "text/xml");
+};
 
-	if (endX !== null && endY !== null) {
-	newAction.setAttribute("endX", endX);
-	newAction.setAttribute("endY", endY);
+documentXML.prototype.update = function() {
+	this.doc.innerHTML = '&lt;picture><br>' + this.xmlString + '&lt;picture>';
+}
+
+documentXML.prototype.addAction = function(type, startX, startY, strokeStyle, lineWidth, endX, endY){
+
+	var aux = '<action type="' + type + '" startX="' + startX + '" startY="' + startY + '" strokeStyle="' + strokeStyle + '" lineWidth="' + lineWidth + '"';
+
+	if (endX != null && endY != null) {
+		aux += ' endX="' + endX + '" endY="' + endY + '"';
+		aux += "</action>"
+	} else {
+		aux+= ">";
 	}
-	this.doc.appendChild(lineBreak);
-	this.doc.appendChild(newAction);
 
+	aux = '\t' + sanitizeText(aux) + '<br>';
 
-
-	this.doc.innerHTML = sanitizeText(this.doc.innerHTML);
+	this.xmlString += aux;
+	this.update();
 };
 
 documentXML.prototype.addPen  = function(startX, startY, strokeStyle, lineWidth)
 {
-	// :TODO
 	this.addAction("pen", startX, startY, strokeStyle, lineWidth, null, null);
-	// Create action element (I)
-	// for (argument t : arguments) { add attribute to (I] with t.value }
 };
 
-documentXML.prototype.addPointToPen = function(index, x, y) {
-	// :TODO
-	// appendChild (new point) to action passed by parameter
-	// for (argument t : arguments) { add attribute to (I] with t.value }
+documentXML.prototype.addPoint = function(index, x, y) {
+	// <point index="37" x="178" y="112" />
+	var aux = '<point index="' + index + '" x="' + x + '" y="' + y + ' />';
+	this.xmlString += sanitizeText(aux) + '<br>';
+	this.update();
 };
 
 documentXML.prototype.addLine = function(startX, startY, strokeStyle, lineWidth, endX, endY) {
@@ -355,16 +387,6 @@ documentXML.prototype.addRect = function(startX, startY, strokeStyle, lineWidth,
 
 documentXML.prototype.addCircle = function(startX, startY, strokeStyle, lineWidth, endX, endY) {
 	this.addAction("cycle", startX, startY, strokeStyle, lineWidth, endX, endY);
-}
-
-documentXML.prototype.appendChild = function(node) {
-	doc.appendChild(node);
-}
-
-documentXML.prototype.update = function() {
-
-	var xmlContent = sanitizeText(this.doc.innerHTML);
-	xml.doc.innerHTML = xmlContent;
 }
 
 /* TOOL MODES SETTING */
@@ -423,16 +445,8 @@ window.onload = function(e) {
 
 	xml = new documentXML();
 
-	var rootNode = document.createElement("picture");
-
-	// rootNode.innerHTML = sanitizeTag(rootNode);
-
-	xml.doc.appendChild(rootNode);
-
-	xml.doc.innerHTML = sanitizeText(xml.doc.innerHTML);
-
 	// startX, startY, strokeStyle, lineWidth, endX, endY
-	xml.addRect(0, 0, "red", 10, 10, 10);
+
 	xml.update();
 
 	//https://stackoverflow.com/questions/349250/how-to-display-xml-in-javascript
@@ -443,6 +457,38 @@ window.onload = function(e) {
 function sanitizeText(text) {
 
 	return text.replace(/\</g,'&lt;');
+}
+
+function loadTest() {
+	var fname = 'test.xml';
+
+	xhttp = new XMLHttpRequest();
+	xhttp.open("GET",fname,false);
+	xhttp.send();
+
+	return xhttp.responseXML.childNodes[0]
+}
+
+function load(){
+ 	var fname = document.getElementById("filename").value;
+
+	xhttp = new XMLHttpRequest();
+	xhttp.open("GET",fname,false);
+	xhttp.send();
+
+	var actionHistory  = document.getElementById("action-history");
+
+	displayFile(actionHistory, xhttp.responseXML.childNodes[0]);
+}
+
+function displayFile(actionHistory, xmlResponse) {
+	for (var i = 0 ; i < xmlResponse.childNodes.length; i++) {
+		draw(actionHistory, xmlResponse.childNodes[i]);
+	}
+}
+
+function draw(actionHistory, node) {
+
 }
 
 // window.onmousemove = function(e) {
