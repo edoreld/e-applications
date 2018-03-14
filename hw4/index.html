@@ -33,19 +33,26 @@
 				<td>Color: <input id="selected-color" class="jscolor" value="ab2567"></td>
 			</tr>
 			<tr>
-			<td>
-				Thickness: <br /> <input id="thickness" type="text" name="Thickness" value="3" readonly><br>
-				<button id="decrease-thickness" onclick="modifyThickness(-1);">-</button>
-				<button id="increase-thickness" onclick="modifyThickness(1);">+</button>
-			</td>
-			<tr>
 				<td>
-					<button id="clear-canvas" value="Clear" onclick="clearCanvas();">Clear</button>
-					<button id="undo" value="Undo" onclick="sm.undo();">Undo</button>
-					<button id="redo" value="Redo" onclick="sm.redo();">Redo</button>
-			</td>
-			</tr>
-		</tbody>
-	</table>
-</body>
-</html>
+					Thickness: <br /> <input id="thickness" type="text" name="Thickness" value="3" readonly><br>
+					<button id="decrease-thickness" onclick="modifyThickness(-1);">-</button>
+					<button id="increase-thickness" onclick="modifyThickness(1);">+</button>
+				</td>
+				<tr>
+					<td>
+						<button id="clear-canvas" value="Clear" onclick="clearCanvas();">Clear</button>
+						<button id="undo" value="Undo" onclick="sm.undo();">Undo</button>
+						<button id="redo" value="Redo" onclick="sm.redo();">Redo</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+
+
+		<pre id="xml-user"></pre>
+
+		<p id="a"></p>
+
+	</body>
+	</html>
