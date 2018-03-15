@@ -196,9 +196,13 @@ function Rectangle() {
 }
 
 Rectangle.draw = function(anchorX, anchorY, x, y, color, thickness) {
-	s.ctx.strokeStyle = color;
+	// s.ctx.strokeStyle = color;
+	// s.ctx.strokeRect(anchorX, anchorY, x - anchorX, y - anchorY);
+
+	s.ctx.fillStyle = color;
 	s.ctx.lineWidth = thickness;
-	s.ctx.strokeRect(anchorX, anchorY, x - anchorX, y - anchorY);
+
+	s.ctx.fillRect(anchorX, anchorY, x - anchorX, y - anchorY);
 };
 
 Rectangle.prototype.handleInput = function() {
@@ -255,9 +259,10 @@ function Circle() {
 }
 
 Circle.draw = function(anchorX, anchorY, x, y, color, thickness) {
-
+	// s.ctx.strokeStyle = color;
 	s.ctx.lineWidth = thickness;
-	s.ctx.strokeStyle = color;
+	s.ctx.fillStyle = color;
+
 	var radiusX = (anchorX - x) > 0 ? anchorX - x : x - anchorX;
 	var radiusY = (anchorY - y) > 0 ? anchorY - y : y - anchorY;
 	// Math.hypot calculates the square root of the squares of its arguments, so
@@ -268,9 +273,11 @@ Circle.draw = function(anchorX, anchorY, x, y, color, thickness) {
 	// the circle
 	var radius = 0.70 * Math.sqrt((anchorX - x)*(anchorX - x) + (anchorY - y)*(anchorY - y));
 
+
 	s.ctx.beginPath();
 	s.ctx.arc(anchorX, anchorY, radius, 0, 2 * Math.PI);
-	s.ctx.stroke();
+	// s.ctx.stroke();
+	s.ctx.fill();
 
 };
 
