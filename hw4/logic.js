@@ -2,6 +2,7 @@ var oc,s;
 var tool;
 var sm;
 var xml;
+var selected;
 
 
 
@@ -28,10 +29,16 @@ function Select() {
 
 }
 
+var node;
+var anchorStartX, anchorStartY;
+var anchorEndX, anchorEndY;
+var xm, xx;
+var strokeStyleAlt;
+
 Select.prototype.handleInput = function() {
 
 	var mouseDown = false;
-	var selectedNode;
+	var type;
 
 	s.canvas.onmousedown = function(e) {
 
@@ -40,24 +47,88 @@ Select.prototype.handleInput = function() {
 		x = e.clientX - s.getX();
 		y = e.clientY - s.getY();
 
-		var node = xml.selectAction(x, y);
+		node = xml.selectAction(x, y);
+
+		if (!(node === null)) {
+
+
+			xm = xml.getXML();
+			xx = xm.childNodes[0].getElementsByTagName('action')[selected];
+
+			strokeStyleAlt = xx.attributes[3].value;
+			type = xx.attributes[0].value;
+
+			anchorStartX = parseInt(xx.attributes[1].value);
+			anchorStartY = parseInt(xx.attributes[2].value);
+			anchorMouseX = x;
+			anchorMouseY = y;
+			if (type != 'pen') {
+				anchorEndX = parseInt(xx.attributes[5].value);
+				anchorEndY = parseInt(xx.attributes[6].value);
+			}
+
+			xx.attributes[3].value = '#3f83a3';
+
+			xm.childNodes[0].getElementsByTagName('action')[selected] = xx;
+			xml.xmlString = xml.getString(xm);
+			xml.update();
+			loadXML(xm);
+		}
+	}
 		// select piece that matches most closely the mouse coordinates
 		// modify the appearance of this piece so we know it's selected
-	}
 
-	s.canvas.onmousemove = function(e) {
-		if (mouseDown === true) {
 
+		s.canvas.onmousemove = function(e) {
+			if (mouseDown === true ) {
+				if (node && selected > -1) {
+
+
+					x = e.clientX - s.getX();
+					y = e.clientY - s.getY();
+
+					xOffset = parseInt(x) - parseInt(anchorMouseX);
+					yOffset = parseInt(y) - parseInt(anchorMouseY);
+
+					anchorMouseX = x;
+					anchorMouseY = y;
+					xx.attributes[1].value = parseInt(xx.attributes[1].value) + xOffset;
+					xx.attributes[2].value = parseInt(xx.attributes[2].value) + yOffset;
+
+					if (type !== 'pen') {
+
+						xx.attributes[5].value = parseInt(xx.attributes[5].value) + xOffset;
+						xx.attributes[6].value = parseInt(xx.attributes[6].value) + yOffset;
+					} else {
+						points = xx.getElementsByTagName('point');
+						for (var i = 0; i < points.length; i++) {
+							points[i].attributes[1].value = parseInt(points[i].attributes[1].value) + xOffset;
+							points[i].attributes[2].value = parseInt(points[i].attributes[2].value) + yOffset;
+						}
+					}
+
+					xm.childNodes[0].getElementsByTagName('action')[selected] = xx;
+					xml.xmlString = xml.getString(xm);
+					xml.update();
+					loadXML(xm);
+
+
+				}
+
+			}
 		}
-		// the following lines might be out of order
 
-		// move the piece following the mouse position
-		// update the xml document
+		s.canvas.onmouseup = function(e) {
+			mouseDown = false;
+			selected = -1;
 
-	}
+			xx.attributes[3].value = strokeStyleAlt;
 
-	s.canvas.onmouseup = function(e) {
-		mouseDown = false;
+			xm.childNodes[0].getElementsByTagName('action')[selected] = xx;
+			xml.xmlString = xml.getString(xm);
+			xml.update();
+			loadXML(xm);
+
 		// stop selecting
 		// revert piece back to original lineWidth and strokeStyle if changed
 	}
@@ -271,7 +342,7 @@ Circle.draw = function(anchorX, anchorY, x, y, color, thickness) {
 	// var radius = Math.hypot(anchorX - x, anchorY - y)
 	// I used Photoshop as inspiration for how the cursor should be positioned in regard to
 	// the circle
-	var radius = 0.70 * Math.sqrt((anchorX - x)*(anchorX - x) + (anchorY - y)*(anchorY - y));
+	var radius = Math.sqrt((anchorX - x)*(anchorX - x) + (anchorY - y)*(anchorY - y));
 
 
 	s.ctx.beginPath();
@@ -401,13 +472,34 @@ function documentXML() {
 	this.xmlString = '';
 }
 
+var fullXMLString;
+
+documentXML.prototype.getXML = function(){
+	var parser = new DOMParser();
+	if (!unsanitizeText(this.xmlString).startsWith('<picture>')) {
+		fullXMLString = '<picture>' + unsanitizeText(this.xmlString) + '</picture>';
+	} else {
+		fullXMLString = unsanitizeText(this.xmlString);
+	}
+	return parser.parseFromString(fullXMLString, "text/xml");
+};
+
 documentXML.prototype.getString = function(xml) {
 	serializer = new XMLSerializer();
 	return serializer.serializeToString(xml);
 };
 
 documentXML.prototype.update = function() {
-	this.doc.innerHTML = '&lt;picture><br />' + this.xmlString + '&lt;/picture>';
+	if (!this.xmlString.startsWith('&lt;picture') && !this.xmlString.startsWith('<picture>')) {
+		this.doc.innerHTML = '&lt;picture><br />' + sanitizeText(this.xmlString) + '&lt;/picture>';
+	} else {
+		this.doc.innerHTML = sanitizeText(this.xmlString);
+	}
+}
+
+documentXML.prototype.clear = function() {
+	this.xmlString = "";
+	this.update();
 }
 
 documentXML.prototype.addAction = function(type, startX, startY, strokeStyle, lineWidth, endX, endY){
@@ -444,6 +536,8 @@ documentXML.prototype.addPoint = function(index, x, y) {
 	this.update();
 };
 
+
+
 documentXML.prototype.addLine = function(startX, startY, strokeStyle, lineWidth, endX, endY) {
 	this.addAction("line", startX, startY, strokeStyle, lineWidth, endX, endY);
 }
@@ -456,34 +550,41 @@ documentXML.prototype.addCircle = function(startX, startY, strokeStyle, lineWidt
 	this.addAction("cycle", startX, startY, strokeStyle, lineWidth, endX, endY);
 }
 
-var fullXMLString;
-
-documentXML.prototype.getXML = function(){
-	var parser = new DOMParser();
-	fullXMLString = '<picture>' + unsanitizeText(this.xmlString) + '</picture>';
-	return parser.parseFromString(fullXMLString, "text/xml");
-};
-
+var match;
 documentXML.prototype.selectAction = function(x, y) {
-	xmlDoc = this.getXML().childNodes[0].getElementsByTagName('action');
-	var match;
+	// console.log("Selecting...");
+	XML = this.getXML();
+	xmlDoc = XML.childNodes[0].getElementsByTagName('action');
+	match = null;
 
 	for (var i = 0 ; i < xmlDoc.length; i++) {
 		type = xmlDoc[i].attributes[0].value;
 
 		switch (type) {
 			case 'pen':
-				match = this.getMatchPen(xmlDoc[i], x, y);
-				break;
-			default:
-				isMatch = this.isMatch(xmlDoc[i], x, y)
+			match = this.getMatchPen(xmlDoc[i], x, y);
+			break;
+			case 'line':
+			match = this.isCursorWithinLine(xmlDoc[i], x, y);
+			break;
+			case 'rect':
+			match = this.isCursorWithinRectangle(xmlDoc[i], x, y);
+			break;
+			case 'cycle':
+			match = this.isCursorWithinCircle(xmlDoc[i], x, y);
+			break;
 		}
+
+		if (match != null) {
+
+			this.xmlString = this.getString(XML);
+			// this.update();
+			selected = i;
+			return match;
+		}
+
 	}
 
-	if (match) {
-		this.selectNode(match);
-		return match;
-	}
 	return null;
 }
 
@@ -492,7 +593,9 @@ documentXML.prototype.getMatchPen = function(node, x, y) {
 	// oldX = parseInt(node.attributes[1].value);
 	// oldY = parseInt(node.attributes[2].value);
 	stroke = node.attributes[3].value;
-	thickness = node.attributes[4].value;
+	thickness = parseInt(node.attributes[4].value);
+
+	// console.log("Thickness: " + thickness)
 
 	points = node.getElementsByTagName('point');
 	for (var i = 0 ; i < points.length ; i++) {
@@ -509,34 +612,109 @@ documentXML.prototype.getMatchPen = function(node, x, y) {
 
 
 documentXML.prototype.matchingCoords = function(oldX, oldY, x, y, thickness){
-	var tolerance = thickness + 2;
+	var tolerance = parseInt(thickness) + parseInt(2);
 
-	if (Math.abs(x - oldX) <= tolerance && Math.abs(y - oldY) <= tolerance) {
-		console.log('Match');
-		console.log('x - nodeX = ' + Math.abs(x - oldX));
-		console.log('y - nodeY = ' + Math.abs(y - oldY));
+
+
+	if (Math.abs(x - oldX) <= tolerance  && Math.abs(y - oldY) <= tolerance) {
+		// console.log('Match');
+		// console.log( "tolerance: " + tolerance);
+		// console.log('x - nodeX = ' + Math.abs(x - oldX));
+		// console.log('y - nodeY = ' + Math.abs(y - oldY));
 		return true;
-	} else {
-		console.log('No Match');
-		console.log('x - nodeX: ' + Math.abs(x - oldX));
-		console.log('y - nodeY: ' + Math.abs(y - oldY));
 	}
 	return false;
 };
 
-documentXML.prototype.isMatch = function(node, x, y) {
-	nodeX = node.attributes[1].value;
-	nodeY = node.attributes[2].value;
+documentXML.prototype.isCursorWithinRectangle = function(node, x, y) {
+	var aux;
+	startX = node.attributes[1].value;
+	startY = node.attributes[2].value;
+	endX = node.attributes[5].value;
+	endY = node.attributes[6].value;
 
-	if (Math.abs(x - nodeX) <= 3 && Math.abs(y - nodeY <= 3)) {
-		console.log('match');
-		return true;
-	} else {
-		console.log('x - nodeX: ' + Math.abs(x - nodeX));
-		console.log('y - nodeY: ' + Math.abs(y - nodeY));
+	if (this.isCursorWithinRectangleAlt(startX, startY, endX, endY, x, y)) {
+		return node;
 	}
-	return false;
+	return null;
 }
+
+documentXML.prototype.isCursorWithinRectangleAlt = function(startX, startY, endX, endY, x, y) {
+	if (endX < startX) {
+		aux = endX;
+		endX = startX;
+		startX = aux;
+	}
+
+	if (endY < startY) {
+		aux = endY;
+		endY = startY;
+		startY = aux;
+	}
+
+
+	if ((x >= startX && x <= endX) && (y >= startY && y <= endY)) {
+
+		return true;
+	}
+
+	return null;
+}
+
+documentXML.prototype.isCursorWithinCircle = function(node, x, y) {
+	startX = node.attributes[1].value;
+	startY = node.attributes[2].value;
+	endX = node.attributes[5].value;
+	endY = node.attributes[6].value;
+
+	var radius = Math.hypot(Math.abs(endX - startX), Math.abs(endY - startY));
+
+	var distSqr = Math.pow(startX - x, 2) + Math.pow(startY - y, 2);
+
+	if (distSqr < radius * radius) {
+		return node;
+	}
+	return null;
+
+}
+
+documentXML.prototype.isCursorWithinLine = function(node, x, y) {
+
+	startX = node.attributes[1].value;
+	startY = node.attributes[2].value;
+	thickness = node.attributes[4].value;
+	endX = node.attributes[5].value;
+	endY = node.attributes[6].value;
+
+	if (endX < startX) {
+		aux = endX;
+		endX = startX;
+		startX = aux;
+	}
+
+	if (endY < startY) {
+		aux = endY;
+		endY = startY;
+		startY = aux;
+	}
+
+	lineLength = distanceBetweenPoints(startX, startY, endX, endY);
+	distanceFromPointToA = distanceBetweenPoints(startX, startY, x, y);
+	distanceFromPointToB = distanceBetweenPoints(endX, endY, x, y);
+
+	console.log(lineLength);
+	console.log(distanceFromPointToA + " : " + distanceFromPointToB);
+	if (distanceFromPointToA + distanceFromPointToB <= lineLength + 3) {
+		return node;
+	}
+	return null;
+}
+
+function distanceBetweenPoints(x1, y1, x2, y2) {
+	return Math.hypot(x2 - x1, y2 - y1);
+}
+
+
 
 /* TOOL MODES SETTING */
 
@@ -563,11 +741,12 @@ function setSelectMode() {
 
 function clearCanvas() {
 	s.ctx.putImageData(sm.saves[0], 0, 0);
+	xml.clear();
 }
 
 /* ELEMENT GETTERS */
 function getColor() {
-	return "#" + document.getElementById("selected-color").value;
+	return document.getElementById("selected-color").value;
 }
 
 function getThickness() {
@@ -598,6 +777,7 @@ function loadTest() {
 }
 
 function load(){
+	clearCanvas();
 	var fname = document.getElementById("filename").value;
 
 	xhttp = new XMLHttpRequest();
@@ -607,6 +787,14 @@ function load(){
 	var actionHistory  = document.getElementById("action-history");
 
 	displayFile(actionHistory, xhttp.responseXML.childNodes[0]);
+}
+
+function loadXML(xml) {
+	clearCanvas();
+
+	var actionHistory  = document.getElementById("action-history");
+
+	displayFile(actionHistory, xml);
 }
 
 
@@ -620,7 +808,7 @@ function displayFile(actionHistory, xmlResponse) {
 function draw(actionHistory, node) {
 	type = node.attributes[0].value;
 
-	console.log(node);
+	// console.log(node);
 
 	if (type === "cycle" || type === "rect" || type === "line") {
 		drawDragAndDrop(type, actionHistory, node);
@@ -632,25 +820,28 @@ function draw(actionHistory, node) {
 
 
 var points;
+
 function drawPencil(actionHistory, node) {
 	startX = node.attributes[1].value;
 	startY = node.attributes[2].value;
 	strokeStyle = node.attributes[3].value;
 	lineWidth = node.attributes[4].value;
 
+	xml.addPen(startX, startY, strokeStyle, lineWidth);
 	points = node.getElementsByTagName('point');
 	for (var i = 0; i < points.length ; i++) {
 		x = points[i].attributes[1].value;
 		y = points[i].attributes[2].value;
+		xml.addPoint(i, x, y);
 
 		Pencil.draw(startX, startY, x, y, strokeStyle, lineWidth);
+
 
 		startX = x;
 		startY = y;
 	}
 
-
-
+	xml.endAction();
 }
 
 function drawDragAndDrop(type, actionHistory, node) {
@@ -661,7 +852,7 @@ function drawDragAndDrop(type, actionHistory, node) {
 	endX = node.attributes[5].value;
 	endY = node.attributes[6].value;
 
-	console.log(type);
+	// console.log(type);
 	switch (type) {
 		case "rect":
 		Rectangle.draw(startX, startY, endX, endY, strokeStyle, lineWidth);
@@ -676,6 +867,7 @@ function drawDragAndDrop(type, actionHistory, node) {
 		console.log("type unrecognized, :-(");
 		break;
 	}
+	xml.addAction(type, startX, startY, strokeStyle, lineWidth, endX, endY);
 }
 
 window.onload = function(e) {
@@ -683,6 +875,7 @@ window.onload = function(e) {
 	sm = new SaveManager();
 	sm.saves[0] = s.ctx.getImageData(0, 0, s.width, s.height);
 	setPencilMode();
+	selected = -1;
 
 	xml = new documentXML();
 
