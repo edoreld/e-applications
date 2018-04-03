@@ -557,7 +557,7 @@ documentXML.prototype.selectAction = function(x, y) {
 	xmlDoc = XML.childNodes[0].getElementsByTagName('action');
 	match = null;
 
-	for (var i = 0 ; i < xmlDoc.length; i++) {
+	for (var i = xmlDoc.length - 1 ; i >= 0; i--) {
 		type = xmlDoc[i].attributes[0].value;
 
 		switch (type) {
@@ -612,7 +612,7 @@ documentXML.prototype.getMatchPen = function(node, x, y) {
 
 
 documentXML.prototype.matchingCoords = function(oldX, oldY, x, y, thickness){
-	var tolerance = parseInt(thickness) + parseInt(2);
+	var tolerance = parseInt(thickness) + parseInt(4);
 
 
 
@@ -702,9 +702,7 @@ documentXML.prototype.isCursorWithinLine = function(node, x, y) {
 	distanceFromPointToA = distanceBetweenPoints(startX, startY, x, y);
 	distanceFromPointToB = distanceBetweenPoints(endX, endY, x, y);
 
-	console.log(lineLength);
-	console.log(distanceFromPointToA + " : " + distanceFromPointToB);
-	if (distanceFromPointToA + distanceFromPointToB <= lineLength + 3) {
+	if (distanceFromPointToA + distanceFromPointToB <= lineLength + 5) {
 		return node;
 	}
 	return null;
@@ -759,7 +757,7 @@ function modifyThickness(value) {
 
 function sanitizeText(text) {
 
-	return text.replace(/\</g,'&lt;').trim();
+	return text.replace(/(?!<br)</g,'&lt;').trim();
 }
 
 function unsanitizeText(text) {
@@ -777,8 +775,11 @@ function loadTest() {
 }
 
 function load(){
-	clearCanvas();
+
 	var fname = document.getElementById("filename").value;
+	if (fname !== '') {
+	clearCanvas();
+
 
 	xhttp = new XMLHttpRequest();
 	xhttp.open("GET",fname,false);
@@ -787,6 +788,7 @@ function load(){
 	var actionHistory  = document.getElementById("action-history");
 
 	displayFile(actionHistory, xhttp.responseXML.childNodes[0]);
+	}
 }
 
 function loadXML(xml) {
