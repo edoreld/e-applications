@@ -119,8 +119,11 @@ Select.prototype.handleInput = function() {
 		}
 
 		s.canvas.onmouseup = function(e) {
+
 			mouseDown = false;
 			selected = -1;
+
+			if (node !== null) {
 
 			xx.attributes[3].value = strokeStyleAlt;
 
@@ -128,6 +131,7 @@ Select.prototype.handleInput = function() {
 			xml.xmlString = xml.getString(xm);
 			xml.update();
 			loadXML(xm);
+		}
 
 		// stop selecting
 		// revert piece back to original lineWidth and strokeStyle if changed
@@ -628,10 +632,10 @@ documentXML.prototype.matchingCoords = function(oldX, oldY, x, y, thickness){
 
 documentXML.prototype.isCursorWithinRectangle = function(node, x, y) {
 	var aux;
-	startX = node.attributes[1].value;
-	startY = node.attributes[2].value;
-	endX = node.attributes[5].value;
-	endY = node.attributes[6].value;
+	startX = parseInt(node.attributes[1].value);
+	startY = parseInt(node.attributes[2].value);
+	endX = parseInt(node.attributes[5].value);
+	endY = parseInt(node.attributes[6].value);
 
 	if (this.isCursorWithinRectangleAlt(startX, startY, endX, endY, x, y)) {
 		return node;
@@ -788,6 +792,7 @@ function load(){
 	var actionHistory  = document.getElementById("action-history");
 
 	displayFile(actionHistory, xhttp.responseXML.childNodes[0]);
+	sm.save();
 	}
 }
 
