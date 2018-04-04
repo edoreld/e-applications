@@ -5,7 +5,6 @@
 	<title>Drawing Program</title>
 	<script src="logic.js"></script>
 	<link rel="stylesheet" type="text/css" href="style.css">
-	<script src="jscolor.min.js"></script>
 
 
 </head>
@@ -27,25 +26,34 @@
 					<input type="radio" name="tool" value="line" onclick='setLineMode();'>Line<br>
 					<input type="radio" name="tool" value="rectangle" onclick='setRectangleMode();'>Rectangle<br>
 					<input type="radio" name="tool" value="circle" onclick='setCircleMode();'>Circle<br>
+					<input id="select" type="radio" name="tool" value="select" onclick='setSelectMode();'>Select<br>
 				</td>
 			</tr>
 			<tr>
-				<td>Color: <input id="selected-color" class="jscolor" value="ab2567"></td>
+				<td>Color: <input id="selected-color" class="jscolor" value="red">
+				</td>
 			</tr>
 			<tr>
-			<td>
-				Thickness: <br /> <input id="thickness" type="text" name="Thickness" value="3" readonly><br>
-				<button id="decrease-thickness" onclick="modifyThickness(-1);">-</button>
-				<button id="increase-thickness" onclick="modifyThickness(1);">+</button>
-			</td>
+				<td>
+					Thickness: <br /> <input id="thickness" type="text" name="Thickness" value="3" readonly><br>
+					<button id="decrease-thickness" onclick="modifyThickness(-1);">-</button>
+					<button id="increase-thickness" onclick="modifyThickness(1);">+</button>
+				</td>
+			</tr>
 			<tr>
 				<td>
 					<button id="clear-canvas" value="Clear" onclick="clearCanvas();">Clear</button>
 					<button id="undo" value="Undo" onclick="sm.undo();">Undo</button>
-					<button id="redo" value="Redo" onclick="sm.redo();">Redo</button>
-			</td>
+					<button id="redo" value="Redo" onclick="sm.redo();">Redo</button><br><br>
+					<input id="filename" /><button value="" onclick="load();">Load</button>
+				</td>
 			</tr>
 		</tbody>
 	</table>
+
+	<p style="font-weight: bold;">Action History</p>
+
+	<div id='action-history'>
+	</div>
 </body>
 </html>
