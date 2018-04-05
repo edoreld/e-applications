@@ -1,0 +1,396 @@
+<html>
+<head> <title> Pong! </title> </head>
+<body>
+
+	<script>
+
+		var s;
+		var gameState = {};
+
+		window.onload = function() {
+
+			s = new CanvasState(document.getElementById("mycanvas1"));
+			init();
+			gameState.ball.dy = 0;
+			gameState.ball.dx = 3;
+		}
+
+		function init(){
+
+			var canvas=document.getElementById("mycanvas1");
+
+	//(re)Set step,redraw cycle
+	if(gameState.interval) clearInterval(gameState.interval);
+	gameState.interval = setInterval(function(){step();redraw();},10);
+
+	//Init gameState
+	gameState.width = Number(s.width);
+	gameState.height = Number(s.height);
+
+	gameState.leftEdge = 5;
+	gameState.rightEdge = s.width - 5;
+	gameState.topEdge = 5;
+
+	//Set two rackets
+	gameState.racketSize = 50;
+
+	gameState.p2 = {};
+	gameState.p2.left = gameState.width/2 - gameState.racketSize/2;
+	gameState.p2.right = gameState.width/2 + gameState.racketSize/2;
+	gameState.p2.up = gameState.height-10;
+	gameState.p2.down = gameState.height-5;
+	gameState.p2.color = "green";
+	gameState.p2.dx = 0;
+	gameState.ai = false;
+	gameState.p2.lkey = 37;
+	gameState.p2.rkey = 39; //z-x
+
+	//Ball
+	gameState.ball = {};
+	gameState.ball.x = gameState.width/2;
+	gameState.ball.y = gameState.height/6;
+	gameState.ball.dx = Math.random()*10-5;
+	gameState.ball.dy = 1.5;
+	gameState.ball.r = 3;
+	gameState.ball.color = "white";
+
+}
+
+function step()
+{
+	//Move items
+	gameState.ball.x += gameState.ball.dx;
+	gameState.ball.y += gameState.ball.dy;
+	gameState.p2.left += gameState.p2.dx;
+	gameState.p2.right += gameState.p2.dx;
+
+	// Check left-right wall vs. ball
+	if(gameState.ball.x + gameState.ball.r > gameState.rightEdge)
+		gameState.ball.dx = - gameState.ball.dx;
+	if(gameState.ball.x - gameState.ball.r < gameState.leftEdge)
+		gameState.ball.dx = - gameState.ball.dx;
+	if(gameState.ball.y - gameState.ball.r < gameState.topEdge) {
+		gameState.ball.dy = - gameState.ball.dy;
+	}
+
+	// Check left-right wall vs. racket
+
+	if(gameState.p2.right > gameState.rightEdge){
+		gameState.p2.right = gameState.rightEdge;
+		gameState.p2.left = gameState.p2.right - gameState.racketSize;
+	}
+	if(gameState.p2.left < gameState.leftEdge){
+		gameState.p2.left = gameState.leftEdge;
+		gameState.p2.right = gameState.p2.left + gameState.racketSize;
+	}
+
+	//Check lower racket
+	if(gameState.ball.y + gameState.ball.r > gameState.p2.up &&
+		gameState.ball.x + gameState.ball.r > gameState.p2.left &&
+		gameState.ball.x - gameState.ball.r < gameState.p2.right)
+	{
+		gameState.ball.dy = - gameState.ball.dy;
+		gameState.ball.dx = 3*(gameState.ball.x - gameState.p2.left - gameState.racketSize/2)/gameState.racketSize;
+	}
+}
+
+function redraw()
+{
+
+	//Draw playing area
+	s.ctx.fillStyle = "white";
+	clearCanvas();
+
+	s.ctx.fillStyle = "gray";
+	s.ctx.fillRect(0,0,gameState.leftEdge,s.height);
+	s.ctx.fillRect(gameState.rightEdge,0,gameState.leftEdge,s.height);
+	s.ctx.fillRect(0,0,s.width,gameState.topEdge);
+
+
+	//Draw rackets
+	s.ctx.fillStyle = gameState.p2.color;
+	s.ctx.fillRect(gameState.p2.left, gameState.p2.up, gameState.racketSize, 5);
+
+	//Draw ball
+	s.ctx.fillStyle = 'red';
+	s.ctx.beginPath();
+	s.ctx.arc(gameState.ball.x,gameState.ball.y,gameState.ball.r,0,2*Math.PI);
+	s.ctx.fill();
+
+	// Draw bricks
+	s.draw();
+	s.checkBoundaries();
+	// Update Stats
+}
+
+window.onkeydown = function readKey(e){
+	switch(e.keyCode){
+		case gameState.p2.lkey:
+		gameState.p2.dx = -2;
+		return false;
+		case gameState.p2.rkey:
+		gameState.p2.dx = 2;
+		return false;
+	}
+}
+
+window.onkeyup = function releaseKey(e){
+	switch(e.keyCode){
+		case gameState.p2.lkey:
+		case gameState.p2.rkey:
+		gameState.p2.dx = 0;
+		return false;
+	}
+}
+
+function CanvasState(canvas) {
+	this.boundingClientRect = canvas.getBoundingClientRect();
+	this.canvas = canvas;
+	this.width = canvas.width;
+	this.height = canvas.height;
+	this.ctx = canvas.getContext("2d");
+	this.elems = [];
+}
+
+CanvasState.prototype.getX = function() {
+	this.boundingClientRect = canvas.getBoundingClientRect();
+	return this.boundingClientRect.x;
+}
+
+CanvasState.prototype.getY = function() {
+	this.boundingClientRect = canvas.getBoundingClientRect();
+	return this.boundingClientRect.y;
+}
+
+CanvasState.prototype.draw = function(){
+	for (var i = 0; i < this.elems.length; i++) {
+		this.elems[i].draw();
+	}
+};
+
+
+CanvasState.prototype.checkBoundaries = function() {
+	for (var i = 0; i < this.elems.length; i++) {
+		this.elems[i].checkBoundary();
+	}
+}
+
+CanvasState.prototype.addElem = function(node) {
+	tag = node.nodeName;
+	color = node.attributes[0].value
+	left = parseInt(node.attributes[1].value);
+	topN = parseInt(node.attributes[2].value)
+	right = parseInt(node.attributes[3].value)
+	bottom = parseInt(node.attributes[4].value)
+
+	switch (tag) {
+		case 'brick':
+		this.elems.push(new Tool(new Brick(color,left,topN, right, bottom)));
+		break;
+		case 'wall':
+		this.elems.push(new Tool(new Wall(color,left,topN, right, bottom)));
+		break;
+		default:
+		console.log('Type of element invalid');
+		break;
+	}
+};
+
+
+function load()
+{
+	clearCanvas();
+	s.elems = [];
+	var fname = document.getElementById("filename").value;
+	if (fname !== '') {
+		clearCanvas();
+
+		xhttp = new XMLHttpRequest();
+		xhttp.open("GET",fname,false);
+		xhttp.send();
+
+		displayFile(xhttp.responseXML.childNodes[0]);
+	}
+}
+
+
+
+function displayFile(xmlResponse) {
+	shapes = xmlResponse.getElementsByTagName('*');
+
+	for (var i = 0 ; i < shapes.length; i++) {
+		s.addElem(shapes[i]);
+	}
+}
+
+/* BRICK */
+
+function Brick(color, left, topN, right, bottom) {
+	this.color = color;
+	this.left = left;
+	this.topN = topN;
+	this.right = right;
+	this.bottom = bottom;
+}
+
+Brick.prototype.getWidth = function() {
+	return Math.abs(this.right - this.left);
+}
+
+Brick.prototype.getHeight = function() {
+	return Math.abs(this.bottom - this.topN);
+}
+
+Brick.prototype.draw = function() {
+	s.ctx.strokeStyle = this.color;
+
+	s.ctx.lineWidth = 3;
+
+	// s.ctx.strokeRect(left, topN, right, bottom);
+
+	s.ctx.strokeRect(this.left,this.topN,this.right - this.left,this.bottom - this.topN);
+}
+
+Brick.prototype.checkBoundary = function() {
+	if (this.ballInsideBrick()) {
+		if (this.hitFromBottom() || this.hitFromTop()) {
+			// console.log('Changing dy');
+			gameState.ball.dy = - gameState.ball.dy
+		}
+
+		if (this.hitFromLeft() || this.hitFromRight()) {
+			// console.log('Changing dx');
+			gameState.ball.dx = - gameState.ball.dx
+		}
+	}
+}
+
+
+Brick.prototype.ballInsideBrick = function() {
+	return this.hitFromBottom() || this.hitFromTop() || this.hitFromLeft() || this.hitFromRight();
+}
+
+Brick.prototype.hitFromLeft = function() {
+
+	// console.log('Ball: (' + gameState.ball.x + ', ' + gameState.ball.y + ')');
+	// console.log('This. Left: ' + this.left + ', Top: ' + this.topN + ', Right: ' + this.right + ' Bottom: ' + this.bottom);
+	hitFromLeft = gameState.ball.x + gameState.ball.r > this.left &&
+	gameState.ball.x < this.left + gameState.ball.r &&
+	gameState.ball.y + gameState.ball.r > this.topN &&
+	gameState.ball.y - gameState.ball.r < this.bottom &&
+	gameState.ball.dx > 0;
+	// console.log('hitFromLeft: ' + hitFromLeft);
+	return hitFromLeft;
+}
+
+Brick.prototype.hitFromRight = function() {
+
+	hitFromRight = gameState.ball.x - gameState.ball.r < this.right &&
+	gameState.ball.x > this.right - gameState.ball.r &&
+	gameState.ball.y + gameState.ball.r > this.topN &&
+	gameState.ball.y - gameState.ball.r < this.bottom &&
+	gameState.ball.dx < 0;
+	// console.log('hitFromRight: ' + hitFromRight);
+	return hitFromRight;
+}
+
+Brick.prototype.hitFromTop = function() {
+	hitFromTop = gameState.ball.y + gameState.ball.r > this.topN &&
+	gameState.ball.y < this.topN + gameState.ball.r &&
+	gameState.ball.x + gameState.ball.r > this.left &&
+	gameState.ball.x - gameState.ball.r < this.right &&
+	gameState.ball.dy > 0;
+	// console.log('hitFromTop: ' + hitFromTop);
+	return hitFromTop;
+}
+
+Brick.prototype.hitFromBottom = function() {
+	hitFromBottom = gameState.ball.y - gameState.ball.r < this.bottom &&
+	gameState.ball.y > this.bottom - gameState.ball.r &&
+	gameState.ball.x + gameState.ball.r > this.left &&
+	gameState.ball.x - gameState.ball.r < this.right &&
+	gameState.ball.dx < 0;
+	// console.log('hitFromBottom: ' + hitFromBottom);
+	return hitFromBottom;
+}
+
+
+
+/* WALL */
+
+function Wall(color, left, topN, right, bottom) {
+	this.color = color;
+	this.left = left;
+	this.topN = topN;
+	this.right = right;
+	this.bottom = bottom;
+}
+
+Wall.prototype.draw = function() {
+	s.ctx.strokeStyle = this.color;
+	s.ctx.fillStyle = this.color;
+	s.ctx.lineWidth = 3;
+	s.ctx.beginPath();
+	s.ctx.moveTo(left, topN);
+	s.ctx.lineTo(right,bottom);
+	s.ctx.stroke();
+	s.ctx.closePath();
+}
+
+Wall.prototype.checkBoundary = function() {
+	if(gameState.ball.y - gameState.ball.r < this.bottom &&
+		gameState.ball.x + gameState.ball.r > this.left &&
+		gameState.ball.x - gameState.ball.r < this.right){
+		gameState.ball.dy = - gameState.ball.dy;
+	gameState.ball.dx = 3*(gameState.ball.x - this.left - gameState.racketSize/2)/gameState.racketSize;
+}
+}
+
+/* TOOL */
+function Tool(tool) {
+	this.tool = tool;
+}
+
+Tool.prototype.draw = function() {
+	this.tool.draw();
+};
+
+Tool.prototype.checkBoundary = function() {
+	this.tool.checkBoundary();
+}
+
+function clearCanvas() {
+	s.ctx.clearRect(0, 0, s.width, s.height);
+}
+
+
+
+</script>
+
+Pong! <br />
+
+<canvas id="mycanvas1" width="500" height="500" > This is not supported!</canvas> <br />
+
+<input type="button" value="Begin!" onclick="init();"/>
+
+<br/>
+Statistics:
+<table>
+	<tr>
+		<td> Lives Lost: </td> <td> <input type="text" readonly="readonly" id="w1" value="0" /> </td>
+	</tr>
+	<tr>
+		<td> Bricks Remaining: </td> <td> <input type="text" readonly="readonly" id="w2" value="0"/> </td>
+	</tr>
+	<tr>
+		<td> Level File: </td> <td> <input id="filename" /><button value="" onclick="load();">Load</button> </td>
+	</tr>
+	<tr>
+		<td> <button value="" onclick="load();">Start</button><button value="" onclick="load();">Pause</button></td>
+	</tr>
+</table>
+
+
+
+</body>
+</html>

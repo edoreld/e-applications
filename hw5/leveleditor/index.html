@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Drawing Program</title>
+	<script src="logic.js"></script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+
+
+</head>
+<body>
+	<table>
+		<tbody>
+			<tr>
+				<th> Canvas</th>
+				<th> Tools </th>
+			</tr>
+			<tr>
+				<td rowspan="5">
+					<canvas id="canvas" width="500" height="500" style="border: 1px solid blue;">
+						Your browser does not support the HTML5 canvas tag.
+					</canvas>
+				</td>
+				<td>
+					<input type="radio" name="tool" value="brick" checked="checked" onclick='setBrickMode();'>Brick<br>
+					<input type="radio" name="tool" value="wall" onclick='setWallMode();'>Wall<br>
+				</td>
+			</tr>
+			<tr>
+				<td>Color: <input id="selected-color" class="jscolor" value="red">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<button id="clear-canvas" value="Clear" onclick="clearCanvas();">Clear</button>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input id="filename" /><button value="" onclick="load();">Load</button>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					Canvas Size <br />
+					X:
+					<input id="x-canvas" type="text" name="x-canvas" value="500" readonly>
+					<button id="increase-canvas-width" onclick="increaseCanvasWidth();">+</button></br />
+					Y
+					<input id="y-canvas" type="text" name="y-canvas" value="500" readonly>
+					<button id="increase-canvas-height" onclick="increaseCanvasHeight();">+</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<p style="font-weight: bold;">Action History</p>
+
+	<div id='action-history'>
+	</div>
+</body>
+</html>

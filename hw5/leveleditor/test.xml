@@ -1,0 +1,7 @@
+<arkanoidlevel width="500" height="500">
+<brick color="red" left="144" top="93" right="294" bottom="95" />
+<brick color="red" left="355" top="145" right="224" bottom="181" />
+<brick color="red" left="200" top="252" right="297" bottom="334" />
+<brick color="red" left="380" top="316" right="433" bottom="265" />
+<wall color="red" left="443" top="84" right="309" bottom="272" />
+</arkanoidlevel>
