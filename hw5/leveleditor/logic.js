@@ -95,14 +95,21 @@ function Line() {
 }
 
 Line.draw = function(anchorX, anchorY, x, y, color) {
+	// s.ctx.strokeStyle = color;
+	// s.ctx.fillStyle = color;
+	// s.ctx.lineWidth = 3;
+	// s.ctx.beginPath();
+	// s.ctx.moveTo(anchorX, anchorY);
+	// s.ctx.lineTo(x,y);
+	// s.ctx.stroke();
+	// s.ctx.closePath();
 	s.ctx.strokeStyle = color;
 	s.ctx.fillStyle = color;
+
 	s.ctx.lineWidth = 3;
-	s.ctx.beginPath();
-	s.ctx.moveTo(anchorX, anchorY);
-	s.ctx.lineTo(x,y);
-	s.ctx.stroke();
-	s.ctx.closePath();
+
+	s.ctx.fillRect(anchorX, anchorY, x - anchorX, y - anchorY);
+
 };
 
 Line.prototype.handleInput = function() {
@@ -710,11 +717,15 @@ function drawPencil(actionHistory, node) {
 function increaseCanvasWidth() {
 	document.getElementById('canvas').attributes[1].value = parseInt(document.getElementById('canvas').attributes[1].value) + 1;
 	document.getElementById('x-canvas').value = parseInt(document.getElementById('x-canvas').value) + 1;
+	loadXML(xml.getXML());
+	xml.width++;
 }
 
 function increaseCanvasHeight() {
 	document.getElementById('canvas').attributes[2].value = parseInt(document.getElementById('canvas').attributes[2].value) + 1;
 	document.getElementById('y-canvas').value = parseInt(document.getElementById('y-canvas').value) + 1;
+	loadXML(xml.getXML());
+	xml.height++;
 }
 
 

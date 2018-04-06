@@ -1,5 +1,5 @@
 <html>
-<head> <title> Pong! </title> </head>
+<head> <title> Arkanoid! </title> </head>
 <body>
 
 	<script>
@@ -10,22 +10,78 @@
 		window.onload = function() {
 
 			s = new CanvasState(document.getElementById("mycanvas1"));
-			init();
-			gameState.ball.dy = 0;
+			initGame();
+			// gameState.ball.dy = 0;
 			gameState.ball.dx = 3;
+		};
+
+		function pause() {
+			if (gameState.status != 'paused' && gameState.status != 'deathPause' && gameState.status != 'won') {
+				gameState.status = 'paused';
+				if(gameState.interval) clearInterval(gameState.interval);
+				gameState.ball.oldDx = gameState.ball.dx;
+				gameState.ball.oldDy = gameState.ball.dy;
+				gameState.ball.dx = 0;
+				gameState.ball.dy = 0;
+			}
+		}
+
+		function resume() {
+			if (gameState.status != 'running' && gameState.status != 'deathPause' && gameState.status != 'won') {
+				gameState.status = 'running';
+				gameState.ball.dx = gameState.ball.oldDx
+				gameState.ball.dy = gameState.ball.oldDy
+				gameState.interval = setInterval(function(){step();redraw();},10);
+			}
+		}
+
+		function deathPause() {
+			gameState.status = 'deathPause';
+			gameState.ball.dx = 0;
+			gameState.ball.dy = 0;
+		}
+
+		function winCondition() {
+			gameState.status = 'won';
+			gameState.ball.dx = 0;
+			gameState.ball.dy = 0;
+
+			writeOnCanvas('30px Arial', 'You Won!"');
+			if(gameState.interval) clearInterval(gameState.interval);
+		}
+
+		function writeOnCanvas(font, text) {
+			s.ctx.font = font;
+			s.ctx.textAlign="center";
+			s.ctx.textBaseline = "middle";
+			s.ctx.fillText(text, s.width/2, s.height/2);
+		}
+
+		function initGame() {
+			init();
+			step();
+			redraw();
+			pause()
+		}
+
+		function initAlt() {
+			load();
+			init();
 		}
 
 		function init(){
 
-			var canvas=document.getElementById("mycanvas1");
+
+
+			gameState.status = 'running';
 
 	//(re)Set step,redraw cycle
 	if(gameState.interval) clearInterval(gameState.interval);
 	gameState.interval = setInterval(function(){step();redraw();},10);
 
 	//Init gameState
-	gameState.width = Number(s.width);
-	gameState.height = Number(s.height);
+	gameState.width = parseInt(s.width);
+	gameState.height = parseInt(s.height);
 
 	gameState.leftEdge = 5;
 	gameState.rightEdge = s.width - 5;
@@ -53,7 +109,6 @@
 	gameState.ball.dy = 1.5;
 	gameState.ball.r = 3;
 	gameState.ball.color = "white";
-
 }
 
 function step()
@@ -69,9 +124,14 @@ function step()
 		gameState.ball.dx = - gameState.ball.dx;
 	if(gameState.ball.x - gameState.ball.r < gameState.leftEdge)
 		gameState.ball.dx = - gameState.ball.dx;
-	if(gameState.ball.y - gameState.ball.r < gameState.topEdge) {
+	if(gameState.ball.y - gameState.ball.r < gameState.topEdge)
 		gameState.ball.dy = - gameState.ball.dy;
+	if(gameState.ball.y + gameState.ball.r >= s.height  ) {
+		deathPause();
+		document.getElementById('w1').value = parseInt(document.getElementById('w1').value)+1;
+		if(gameState.interval) clearInterval(gameState.interval);
 	}
+
 
 	// Check left-right wall vs. racket
 
@@ -105,7 +165,6 @@ function redraw()
 	s.ctx.fillRect(0,0,gameState.leftEdge,s.height);
 	s.ctx.fillRect(gameState.rightEdge,0,gameState.leftEdge,s.height);
 	s.ctx.fillRect(0,0,s.width,gameState.topEdge);
-
 
 	//Draw rackets
 	s.ctx.fillStyle = gameState.p2.color;
@@ -143,6 +202,7 @@ window.onkeyup = function releaseKey(e){
 	}
 }
 
+
 function CanvasState(canvas) {
 	this.boundingClientRect = canvas.getBoundingClientRect();
 	this.canvas = canvas;
@@ -168,10 +228,9 @@ CanvasState.prototype.draw = function(){
 	}
 };
 
-
 CanvasState.prototype.checkBoundaries = function() {
 	for (var i = 0; i < this.elems.length; i++) {
-		this.elems[i].checkBoundary();
+		this.elems[i].checkBoundary(i);
 	}
 }
 
@@ -196,10 +255,27 @@ CanvasState.prototype.addElem = function(node) {
 	}
 };
 
+CanvasState.prototype.removeBrick = function(index) {
+	if (this.elems[index].tool.type === 'brick') {
+		this.elems.splice(index, 1);
+		document.getElementById("w2").value = Number(document.getElementById("w2").value)-1;
+	}
+};
+
+CanvasState.prototype.getNumBricks = function() {
+	var count = 0;
+	for (var i = 0; i < this.elems.length ; i++) {
+		if (this.elems[i].tool.type === 'brick') {
+			count++;
+		}
+	}
+	return count;
+}
 
 function load()
 {
 	clearCanvas();
+	document.getElementById('w1').value = 0;
 	s.elems = [];
 	var fname = document.getElementById("filename").value;
 	if (fname !== '') {
@@ -209,7 +285,25 @@ function load()
 		xhttp.open("GET",fname,false);
 		xhttp.send();
 
+		var width = parseInt(xhttp.responseXML.firstChild.getAttribute('width'));
+		var height = parseInt(xhttp.responseXML.firstChild.getAttribute('height'));
+
+		document.getElementById('mycanvas1').width = width;
+		document.getElementById('mycanvas1').height = height;
+
+		s.width = width;
+		s.height = height;
+
+
 		displayFile(xhttp.responseXML.childNodes[0]);
+		document.getElementById("w2").value = s.getNumBricks();
+
+		gameState.status = 'running';
+		init();
+		step();
+		redraw();
+		writeOnCanvas('30px Arial', 'Click Begin to start!"');
+		pause();
 	}
 }
 
@@ -226,11 +320,12 @@ function displayFile(xmlResponse) {
 /* BRICK */
 
 function Brick(color, left, topN, right, bottom) {
+	this.type = 'brick';
 	this.color = color;
-	this.left = left;
-	this.topN = topN;
-	this.right = right;
-	this.bottom = bottom;
+	this.left = left < right ? left : right;
+	this.topN = topN < bottom ? topN : bottom;
+	this.right = right > left ? right : left;
+	this.bottom = bottom > topN ? bottom : topN;
 }
 
 Brick.prototype.getWidth = function() {
@@ -251,26 +346,38 @@ Brick.prototype.draw = function() {
 	s.ctx.strokeRect(this.left,this.topN,this.right - this.left,this.bottom - this.topN);
 }
 
-Brick.prototype.checkBoundary = function() {
-	if (this.ballInsideBrick()) {
-		if (this.hitFromBottom() || this.hitFromTop()) {
-			// console.log('Changing dy');
-			gameState.ball.dy = - gameState.ball.dy
-		}
 
-		if (this.hitFromLeft() || this.hitFromRight()) {
-			// console.log('Changing dx');
-			gameState.ball.dx = - gameState.ball.dx
-		}
-	}
+/* WALL */
+
+function Wall(color, left, topN, right, bottom) {
+	this.type = 'wall';
+	this.color = color;
+	this.left = left < right ? left : right;
+	this.topN = topN < bottom ? topN : bottom;
+	this.right = right > left ? right : left;
+	this.bottom = bottom > topN ? bottom : topN;
 }
 
+Wall.prototype.draw = function() {
+	s.ctx.strokeStyle = color;
+	s.ctx.fillStyle = color;
 
-Brick.prototype.ballInsideBrick = function() {
-	return this.hitFromBottom() || this.hitFromTop() || this.hitFromLeft() || this.hitFromRight();
+	s.ctx.lineWidth = 3;
+
+	s.ctx.fillRect(this.left, this.topN, this.right - this.left, this.bottom - this.topN);
 }
 
-Brick.prototype.hitFromLeft = function() {
+/* TOOL */
+function Tool(tool) {
+	this.tool = tool;
+	this.entropy = true;
+}
+
+Tool.prototype.draw = function() {
+	this.tool.draw();
+};
+
+Tool.prototype.hitFromLeft = function() {
 
 	// console.log('Ball: (' + gameState.ball.x + ', ' + gameState.ball.y + ')');
 	// console.log('This. Left: ' + this.left + ', Top: ' + this.topN + ', Right: ' + this.right + ' Bottom: ' + this.bottom);
@@ -283,7 +390,7 @@ Brick.prototype.hitFromLeft = function() {
 	return hitFromLeft;
 }
 
-Brick.prototype.hitFromRight = function() {
+Tool.prototype.hitFromRight = function() {
 
 	hitFromRight = gameState.ball.x - gameState.ball.r < this.right &&
 	gameState.ball.x > this.right - gameState.ball.r &&
@@ -294,7 +401,7 @@ Brick.prototype.hitFromRight = function() {
 	return hitFromRight;
 }
 
-Brick.prototype.hitFromTop = function() {
+Tool.prototype.hitFromTop = function() {
 	hitFromTop = gameState.ball.y + gameState.ball.r > this.topN &&
 	gameState.ball.y < this.topN + gameState.ball.r &&
 	gameState.ball.x + gameState.ball.r > this.left &&
@@ -304,74 +411,66 @@ Brick.prototype.hitFromTop = function() {
 	return hitFromTop;
 }
 
-Brick.prototype.hitFromBottom = function() {
+Tool.prototype.hitFromBottom = function() {
 	hitFromBottom = gameState.ball.y - gameState.ball.r < this.bottom &&
 	gameState.ball.y > this.bottom - gameState.ball.r &&
 	gameState.ball.x + gameState.ball.r > this.left &&
 	gameState.ball.x - gameState.ball.r < this.right &&
-	gameState.ball.dx < 0;
+	gameState.ball.dy < 0;
 	// console.log('hitFromBottom: ' + hitFromBottom);
 	return hitFromBottom;
 }
 
-
-
-/* WALL */
-
-function Wall(color, left, topN, right, bottom) {
-	this.color = color;
-	this.left = left;
-	this.topN = topN;
-	this.right = right;
-	this.bottom = bottom;
-}
-
-Wall.prototype.draw = function() {
-	s.ctx.strokeStyle = this.color;
-	s.ctx.fillStyle = this.color;
-	s.ctx.lineWidth = 3;
-	s.ctx.beginPath();
-	s.ctx.moveTo(left, topN);
-	s.ctx.lineTo(right,bottom);
-	s.ctx.stroke();
-	s.ctx.closePath();
-}
-
-Wall.prototype.checkBoundary = function() {
-	if(gameState.ball.y - gameState.ball.r < this.bottom &&
-		gameState.ball.x + gameState.ball.r > this.left &&
-		gameState.ball.x - gameState.ball.r < this.right){
-		gameState.ball.dy = - gameState.ball.dy;
-	gameState.ball.dx = 3*(gameState.ball.x - this.left - gameState.racketSize/2)/gameState.racketSize;
-}
-}
-
-/* TOOL */
-function Tool(tool) {
-	this.tool = tool;
-}
-
-Tool.prototype.draw = function() {
-	this.tool.draw();
+Tool.prototype.ballInsideBrick = function() {
+	return this.hitFromBottom.call(this.tool) || this.hitFromTop.call(this.tool) || this.hitFromLeft.call(this.tool) || this.hitFromRight.call(this.tool);
 };
 
-Tool.prototype.checkBoundary = function() {
-	this.tool.checkBoundary();
-}
+Tool.prototype.checkBoundary = function(index) {
+	dirsChanged = 0;
+
+	if (this.hitFromBottom.call(this.tool) || this.hitFromTop.call(this.tool)) {
+		gameState.ball.dy = - gameState.ball.dy
+		dirsChanged++;
+	}
+
+	if (this.hitFromLeft.call(this.tool) || this.hitFromRight.call(this.tool)) {
+		gameState.ball.dx = - gameState.ball.dx
+		dirsChanged++;
+	}
+
+	if (dirsChanged > 0) {
+		s.removeBrick(index);
+		if (s.elems.length == 0) {
+			winCondition();
+		}
+	}
+
+	if (dirsChanged === 2) {
+		if (Math.random() > 0.5) {
+			gameState.ball.dx += 0.05;
+			gameState.ball.dy += 0.05;
+		} else {
+			gameState.ball.dx -= 0.05;
+			gameState.ball.dy -= 0.05;
+		}
+		this.entropy = !this.entropy;
+	}
+
+};
+
 
 function clearCanvas() {
 	s.ctx.clearRect(0, 0, s.width, s.height);
 }
 
 
-
 </script>
 
-Pong! <br />
+Arkanoid! <br />
 
 <canvas id="mycanvas1" width="500" height="500" > This is not supported!</canvas> <br />
 
-<input type="button" value="Begin!" onclick="init();"/>
+<input type="button" value="Begin!" onclick="initAlt();"/>
 
 <br/>
 Statistics:
@@ -386,7 +485,7 @@ Statistics:
 		<td> Level File: </td> <td> <input id="filename" /><button value="" onclick="load();">Load</button> </td>
 	</tr>
 	<tr>
-		<td> <button value="" onclick="load();">Start</button><button value="" onclick="load();">Pause</button></td>
+		<td> <button value="" onclick="resume();">Resume</button><button value="" onclick="pause();">Pause</button></td>
 	</tr>
 </table>
 
