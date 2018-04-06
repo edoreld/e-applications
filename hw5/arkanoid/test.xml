@@ -1,6 +1,24 @@
-<arkanoidlevel width="500" height="500">
-<brick color="red" left="179.91319370269775" top="155.69097137451172" right="329.91319370269775" bottom="220.69097137451172" />
-<brick color="red" left="245.91319370269775" top="313.6909713745117" right="379.91319370269775" bottom="272.6909713745117" />
-<brick color="red" left="70.91319370269775" top="331.6909713745117" right="188.91319370269775" bottom="284.6909713745117" />
-<brick color="red" left="225.91319370269775" top="362.6909713745117" right="369.91319370269775" bottom="402.6909713745117" />
+<arkanoidlevel width="600" height="600">
+<brick color="red" left="0" top="0" right="20" bottom="20" />
+<brick color="red" left="20" top="0" right="40" bottom="20" />
+<brick color="red" left="40" top="0" right="60" bottom="20" />
+<brick color="red" left="60" top="0" right="80" bottom="20" />
+<brick color="red" left="80" top="0" right="100" bottom="20" />
+<brick color="red" left="100" top="0" right="120" bottom="20" />
+<brick color="red" left="120" top="0" right="140" bottom="20" />
+<brick color="red" left="140" top="0" right="160" bottom="20" />
+<brick color="red" left="160" top="0" right="180" bottom="20" />
+<brick color="red" left="180" top="0" right="200" bottom="20" />
+<brick color="red" left="200" top="0" right="220" bottom="20" />
+<brick color="red" left="220" top="0" right="240" bottom="20" />
+<brick color="red" left="240" top="0" right="260" bottom="20" />
+<brick color="red" left="260" top="0" right="280" bottom="20" />
+<brick color="red" left="280" top="0" right="300" bottom="20" />
+<brick color="red" left="300" top="0" right="320" bottom="20" />
+<brick color="red" left="320" top="0" right="340" bottom="20" />
+<brick color="red" left="340" top="0" right="360" bottom="20" />
+<brick color="red" left="360" top="0" right="380" bottom="20" />
+<brick color="red" left="380" top="0" right="400" bottom="20" />
+<brick color="red" left="400" top="0" right="420" bottom="20" />
+
 </arkanoidlevel>

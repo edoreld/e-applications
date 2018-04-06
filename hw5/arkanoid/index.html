@@ -1,495 +1,508 @@
 <html>
-<head> <title> Arkanoid! </title> </head>
-<body>
-
-	<script>
-
-		var s;
-		var gameState = {};
-
-		window.onload = function() {
-
-			s = new CanvasState(document.getElementById("mycanvas1"));
-			initGame();
-			// gameState.ball.dy = 0;
-			gameState.ball.dx = 3;
-		};
-
-		function pause() {
-			if (gameState.status != 'paused' && gameState.status != 'deathPause' && gameState.status != 'won') {
-				gameState.status = 'paused';
-				if(gameState.interval) clearInterval(gameState.interval);
-				gameState.ball.oldDx = gameState.ball.dx;
-				gameState.ball.oldDy = gameState.ball.dy;
-				gameState.ball.dx = 0;
-				gameState.ball.dy = 0;
-			}
-		}
-
-		function resume() {
-			if (gameState.status != 'running' && gameState.status != 'deathPause' && gameState.status != 'won') {
-				gameState.status = 'running';
-				gameState.ball.dx = gameState.ball.oldDx
-				gameState.ball.dy = gameState.ball.oldDy
-				gameState.interval = setInterval(function(){step();redraw();},10);
-			}
-		}
-
-		function deathPause() {
-			gameState.status = 'deathPause';
-			gameState.ball.dx = 0;
-			gameState.ball.dy = 0;
-		}
-
-		function winCondition() {
-			gameState.status = 'won';
-			gameState.ball.dx = 0;
-			gameState.ball.dy = 0;
-
-			writeOnCanvas('30px Arial', 'You Won!"');
-			if(gameState.interval) clearInterval(gameState.interval);
-		}
-
-		function writeOnCanvas(font, text) {
-			s.ctx.font = font;
-			s.ctx.textAlign="center";
-			s.ctx.textBaseline = "middle";
-			s.ctx.fillText(text, s.width/2, s.height/2);
-		}
-
-		function initGame() {
-			init();
-			step();
-			redraw();
-			pause()
-		}
-
-		function initAlt() {
-			load();
-			init();
-		}
-
-		function init(){
-
-
-
-			gameState.status = 'running';
-
-	//(re)Set step,redraw cycle
-	if(gameState.interval) clearInterval(gameState.interval);
-	gameState.interval = setInterval(function(){step();redraw();},10);
-
-	//Init gameState
-	gameState.width = parseInt(s.width);
-	gameState.height = parseInt(s.height);
-
-	gameState.leftEdge = 5;
-	gameState.rightEdge = s.width - 5;
-	gameState.topEdge = 5;
-
-	//Set two rackets
-	gameState.racketSize = 50;
-
-	gameState.p2 = {};
-	gameState.p2.left = gameState.width/2 - gameState.racketSize/2;
-	gameState.p2.right = gameState.width/2 + gameState.racketSize/2;
-	gameState.p2.up = gameState.height-10;
-	gameState.p2.down = gameState.height-5;
-	gameState.p2.color = "green";
-	gameState.p2.dx = 0;
-	gameState.ai = false;
-	gameState.p2.lkey = 37;
-	gameState.p2.rkey = 39; //z-x
-
-	//Ball
-	gameState.ball = {};
-	gameState.ball.x = gameState.width/2;
-	gameState.ball.y = gameState.height/6;
-	gameState.ball.dx = Math.random()*10-5;
-	gameState.ball.dy = 1.5;
-	gameState.ball.r = 3;
-	gameState.ball.color = "white";
-}
-
-function step()
-{
-	//Move items
-	gameState.ball.x += gameState.ball.dx;
-	gameState.ball.y += gameState.ball.dy;
-	gameState.p2.left += gameState.p2.dx;
-	gameState.p2.right += gameState.p2.dx;
-
-	// Check left-right wall vs. ball
-	if(gameState.ball.x + gameState.ball.r > gameState.rightEdge)
-		gameState.ball.dx = - gameState.ball.dx;
-	if(gameState.ball.x - gameState.ball.r < gameState.leftEdge)
-		gameState.ball.dx = - gameState.ball.dx;
-	if(gameState.ball.y - gameState.ball.r < gameState.topEdge)
-		gameState.ball.dy = - gameState.ball.dy;
-	if(gameState.ball.y + gameState.ball.r >= s.height  ) {
-		deathPause();
-		document.getElementById('w1').value = parseInt(document.getElementById('w1').value)+1;
-		if(gameState.interval) clearInterval(gameState.interval);
-	}
-
-
-	// Check left-right wall vs. racket
-
-	if(gameState.p2.right > gameState.rightEdge){
-		gameState.p2.right = gameState.rightEdge;
-		gameState.p2.left = gameState.p2.right - gameState.racketSize;
-	}
-	if(gameState.p2.left < gameState.leftEdge){
-		gameState.p2.left = gameState.leftEdge;
-		gameState.p2.right = gameState.p2.left + gameState.racketSize;
-	}
-
-	//Check lower racket
-	if(gameState.ball.y + gameState.ball.r > gameState.p2.up &&
-		gameState.ball.x + gameState.ball.r > gameState.p2.left &&
-		gameState.ball.x - gameState.ball.r < gameState.p2.right)
-	{
-		gameState.ball.dy = - gameState.ball.dy;
-		gameState.ball.dx = 3*(gameState.ball.x - gameState.p2.left - gameState.racketSize/2)/gameState.racketSize;
-	}
-}
-
-function redraw()
-{
-
-	//Draw playing area
-	s.ctx.fillStyle = "white";
-	clearCanvas();
-
-	s.ctx.fillStyle = "gray";
-	s.ctx.fillRect(0,0,gameState.leftEdge,s.height);
-	s.ctx.fillRect(gameState.rightEdge,0,gameState.leftEdge,s.height);
-	s.ctx.fillRect(0,0,s.width,gameState.topEdge);
-
-	//Draw rackets
-	s.ctx.fillStyle = gameState.p2.color;
-	s.ctx.fillRect(gameState.p2.left, gameState.p2.up, gameState.racketSize, 5);
-
-	//Draw ball
-	s.ctx.fillStyle = 'red';
-	s.ctx.beginPath();
-	s.ctx.arc(gameState.ball.x,gameState.ball.y,gameState.ball.r,0,2*Math.PI);
-	s.ctx.fill();
-
-	// Draw bricks
-	s.draw();
-	s.checkBoundaries();
-	// Update Stats
-}
-
-window.onkeydown = function readKey(e){
-	switch(e.keyCode){
-		case gameState.p2.lkey:
-		gameState.p2.dx = -2;
-		return false;
-		case gameState.p2.rkey:
-		gameState.p2.dx = 2;
-		return false;
-	}
-}
-
-window.onkeyup = function releaseKey(e){
-	switch(e.keyCode){
-		case gameState.p2.lkey:
-		case gameState.p2.rkey:
-		gameState.p2.dx = 0;
-		return false;
-	}
-}
-
-
-function CanvasState(canvas) {
-	this.boundingClientRect = canvas.getBoundingClientRect();
-	this.canvas = canvas;
-	this.width = canvas.width;
-	this.height = canvas.height;
-	this.ctx = canvas.getContext("2d");
-	this.elems = [];
-}
-
-CanvasState.prototype.getX = function() {
-	this.boundingClientRect = canvas.getBoundingClientRect();
-	return this.boundingClientRect.x;
-}
-
-CanvasState.prototype.getY = function() {
-	this.boundingClientRect = canvas.getBoundingClientRect();
-	return this.boundingClientRect.y;
-}
-
-CanvasState.prototype.draw = function(){
-	for (var i = 0; i < this.elems.length; i++) {
-		this.elems[i].draw();
-	}
-};
-
-CanvasState.prototype.checkBoundaries = function() {
-	for (var i = 0; i < this.elems.length; i++) {
-		this.elems[i].checkBoundary(i);
-	}
-}
-
-CanvasState.prototype.addElem = function(node) {
-	tag = node.nodeName;
-	color = node.attributes[0].value
-	left = parseInt(node.attributes[1].value);
-	topN = parseInt(node.attributes[2].value)
-	right = parseInt(node.attributes[3].value)
-	bottom = parseInt(node.attributes[4].value)
-
-	switch (tag) {
-		case 'brick':
-		this.elems.push(new Tool(new Brick(color,left,topN, right, bottom)));
-		break;
-		case 'wall':
-		this.elems.push(new Tool(new Wall(color,left,topN, right, bottom)));
-		break;
-		default:
-		console.log('Type of element invalid');
-		break;
-	}
-};
-
-CanvasState.prototype.removeBrick = function(index) {
-	if (this.elems[index].tool.type === 'brick') {
-		this.elems.splice(index, 1);
-		document.getElementById("w2").value = Number(document.getElementById("w2").value)-1;
-	}
-};
-
-CanvasState.prototype.getNumBricks = function() {
-	var count = 0;
-	for (var i = 0; i < this.elems.length ; i++) {
-		if (this.elems[i].tool.type === 'brick') {
-			count++;
-		}
-	}
-	return count;
-}
-
-function load()
-{
-	clearCanvas();
-	document.getElementById('w1').value = 0;
-	s.elems = [];
-	var fname = document.getElementById("filename").value;
-	if (fname !== '') {
-		clearCanvas();
-
-		xhttp = new XMLHttpRequest();
-		xhttp.open("GET",fname,false);
-		xhttp.send();
-
-		var width = parseInt(xhttp.responseXML.firstChild.getAttribute('width'));
-		var height = parseInt(xhttp.responseXML.firstChild.getAttribute('height'));
-
-		document.getElementById('mycanvas1').width = width;
-		document.getElementById('mycanvas1').height = height;
-
-		s.width = width;
-		s.height = height;
-
-
-		displayFile(xhttp.responseXML.childNodes[0]);
-		document.getElementById("w2").value = s.getNumBricks();
-
-		gameState.status = 'running';
-		init();
-		step();
-		redraw();
-		writeOnCanvas('30px Arial', 'Click Begin to start!"');
-		pause();
-	}
-}
-
-
-
-function displayFile(xmlResponse) {
-	shapes = xmlResponse.getElementsByTagName('*');
-
-	for (var i = 0 ; i < shapes.length; i++) {
-		s.addElem(shapes[i]);
-	}
-}
-
-/* BRICK */
-
-function Brick(color, left, topN, right, bottom) {
-	this.type = 'brick';
-	this.color = color;
-	this.left = left < right ? left : right;
-	this.topN = topN < bottom ? topN : bottom;
-	this.right = right > left ? right : left;
-	this.bottom = bottom > topN ? bottom : topN;
-}
-
-Brick.prototype.getWidth = function() {
-	return Math.abs(this.right - this.left);
-}
-
-Brick.prototype.getHeight = function() {
-	return Math.abs(this.bottom - this.topN);
-}
-
-Brick.prototype.draw = function() {
-	s.ctx.strokeStyle = this.color;
-
-	s.ctx.lineWidth = 3;
-
-	// s.ctx.strokeRect(left, topN, right, bottom);
-
-	s.ctx.strokeRect(this.left,this.topN,this.right - this.left,this.bottom - this.topN);
-}
-
-
-/* WALL */
-
-function Wall(color, left, topN, right, bottom) {
-	this.type = 'wall';
-	this.color = color;
-	this.left = left < right ? left : right;
-	this.topN = topN < bottom ? topN : bottom;
-	this.right = right > left ? right : left;
-	this.bottom = bottom > topN ? bottom : topN;
-}
-
-Wall.prototype.draw = function() {
-	s.ctx.strokeStyle = color;
-	s.ctx.fillStyle = color;
-
-	s.ctx.lineWidth = 3;
-
-	s.ctx.fillRect(this.left, this.topN, this.right - this.left, this.bottom - this.topN);
-}
-
-/* TOOL */
-function Tool(tool) {
-	this.tool = tool;
-	this.entropy = true;
-}
-
-Tool.prototype.draw = function() {
-	this.tool.draw();
-};
-
-Tool.prototype.hitFromLeft = function() {
-
-	// console.log('Ball: (' + gameState.ball.x + ', ' + gameState.ball.y + ')');
-	// console.log('This. Left: ' + this.left + ', Top: ' + this.topN + ', Right: ' + this.right + ' Bottom: ' + this.bottom);
-	hitFromLeft = gameState.ball.x + gameState.ball.r > this.left &&
-	gameState.ball.x < this.left + gameState.ball.r &&
-	gameState.ball.y + gameState.ball.r > this.topN &&
-	gameState.ball.y - gameState.ball.r < this.bottom &&
-	gameState.ball.dx > 0;
-	// console.log('hitFromLeft: ' + hitFromLeft);
-	return hitFromLeft;
-}
-
-Tool.prototype.hitFromRight = function() {
-
-	hitFromRight = gameState.ball.x - gameState.ball.r < this.right &&
-	gameState.ball.x > this.right - gameState.ball.r &&
-	gameState.ball.y + gameState.ball.r > this.topN &&
-	gameState.ball.y - gameState.ball.r < this.bottom &&
-	gameState.ball.dx < 0;
-	// console.log('hitFromRight: ' + hitFromRight);
-	return hitFromRight;
-}
-
-Tool.prototype.hitFromTop = function() {
-	hitFromTop = gameState.ball.y + gameState.ball.r > this.topN &&
-	gameState.ball.y < this.topN + gameState.ball.r &&
-	gameState.ball.x + gameState.ball.r > this.left &&
-	gameState.ball.x - gameState.ball.r < this.right &&
-	gameState.ball.dy > 0;
-	// console.log('hitFromTop: ' + hitFromTop);
-	return hitFromTop;
-}
-
-Tool.prototype.hitFromBottom = function() {
-	hitFromBottom = gameState.ball.y - gameState.ball.r < this.bottom &&
-	gameState.ball.y > this.bottom - gameState.ball.r &&
-	gameState.ball.x + gameState.ball.r > this.left &&
-	gameState.ball.x - gameState.ball.r < this.right &&
-	gameState.ball.dy < 0;
-	// console.log('hitFromBottom: ' + hitFromBottom);
-	return hitFromBottom;
-}
-
-Tool.prototype.ballInsideBrick = function() {
-	return this.hitFromBottom.call(this.tool) || this.hitFromTop.call(this.tool) || this.hitFromLeft.call(this.tool) || this.hitFromRight.call(this.tool);
-};
-
-Tool.prototype.checkBoundary = function(index) {
-	dirsChanged = 0;
-
-	if (this.hitFromBottom.call(this.tool) || this.hitFromTop.call(this.tool)) {
-		gameState.ball.dy = - gameState.ball.dy
-		dirsChanged++;
-	}
-
-	if (this.hitFromLeft.call(this.tool) || this.hitFromRight.call(this.tool)) {
-		gameState.ball.dx = - gameState.ball.dx
-		dirsChanged++;
-	}
-
-	if (dirsChanged > 0) {
-		s.removeBrick(index);
-		if (s.elems.length == 0) {
-			winCondition();
-		}
-	}
-
-	if (dirsChanged === 2) {
-		if (Math.random() > 0.5) {
-			gameState.ball.dx += 0.05;
-			gameState.ball.dy += 0.05;
-		} else {
-			gameState.ball.dx -= 0.05;
-			gameState.ball.dy -= 0.05;
-		}
-		this.entropy = !this.entropy;
-	}
-
-};
-
-
-function clearCanvas() {
-	s.ctx.clearRect(0, 0, s.width, s.height);
-}
-
-
-</script>
-
-Arkanoid! <br />
-
-<canvas id="mycanvas1" width="500" height="500" > This is not supported!</canvas> <br />
-
-<input type="button" value="Begin!" onclick="initAlt();"/>
-
-<br/>
-Statistics:
-<table>
-	<tr>
-		<td> Lives Lost: </td> <td> <input type="text" readonly="readonly" id="w1" value="0" /> </td>
-	</tr>
-	<tr>
-		<td> Bricks Remaining: </td> <td> <input type="text" readonly="readonly" id="w2" value="0"/> </td>
-	</tr>
-	<tr>
-		<td> Level File: </td> <td> <input id="filename" /><button value="" onclick="load();">Load</button> </td>
-	</tr>
-	<tr>
-		<td> <button value="" onclick="resume();">Resume</button><button value="" onclick="pause();">Pause</button></td>
-	</tr>
-</table>
-
-
-
-</body>
+    <head>
+        <title>Arkanoid! </title>
+    </head>
+    <body>
+        <script>
+
+            var s;
+            var gameState = {};
+
+            window.onload = function() {
+            	gameState.state = 'firstLaunch';
+
+                s = new CanvasState(document.getElementById("mycanvas1"));
+                initGame();
+                // gameState.ball.dy = 0;
+                gameState.ball.dx = 3;
+            };
+
+
+            function pause() {
+                if (gameState.status != 'paused' && gameState.status != 'deathPause' && gameState.status != 'won') {
+                    gameState.status = 'paused';
+                    if (gameState.interval)
+                        clearInterval(gameState.interval);
+                    gameState.ball.oldDx = gameState.ball.dx;
+                    gameState.ball.oldDy = gameState.ball.dy;
+                    gameState.ball.dx = 0;
+                    gameState.ball.dy = 0;
+                }
+            }
+
+            function resume() {
+                if (gameState.status != 'running' && gameState.status != 'deathPause' && gameState.status != 'won') {
+                    gameState.status = 'running';
+                    gameState.ball.dx = gameState.ball.oldDx
+                    gameState.ball.dy = gameState.ball.oldDy
+                    gameState.interval = setInterval(function() {
+                        step();
+                        redraw();
+                    }, 10);
+                }
+            }
+
+            function deathPause() {
+                gameState.status = 'deathPause';
+                gameState.ball.dx = 0;
+                gameState.ball.dy = 0;
+                document.getElementById('w1').value = parseInt(document.getElementById('w1').value) + 1;
+            }
+
+            function winCondition() {
+                gameState.status = 'won';
+                gameState.ball.dx = 0;
+                gameState.ball.dy = 0;
+
+                writeOnCanvas('24px Arial', 'You Won!');
+                if (gameState.interval)
+                    clearInterval(gameState.interval);
+            }
+
+            function writeOnCanvas(font, text) {
+                s.ctx.font = font;
+                s.ctx.textAlign = "center";
+                s.ctx.textBaseline = "middle";
+                s.ctx.fillText(text, s.width - s.width / 2, s.height - s.height / 4 + s.height / 8);
+            }
+
+            function initGame() {
+                init();
+                step();
+                redraw();
+                writeOnCanvas('14px Arial', 'Please load a level to start (i.e: level1.xml, level2.xml, level3.xml');
+                pause()
+            }
+
+            function initAlt(flag) {
+                load(flag);
+                init();
+            }
+
+            function init() {
+
+                gameState.status = 'running';
+
+                //(re)Set step,redraw cycle
+                if (gameState.interval)
+                    clearInterval(gameState.interval);
+
+                gameState.interval = setInterval(function() {
+                    step();
+                    redraw();
+                }, 10);
+
+                //Init gameState
+                gameState.width = parseFloat(s.width);
+                gameState.height = parseFloat(s.height);
+
+                gameState.leftEdge = 5;
+                gameState.rightEdge = s.width - 5;
+                gameState.topEdge = 5;
+
+                //Set two rackets
+                gameState.racketSize = 50;
+
+                gameState.p2 = {};
+                gameState.p2.left = gameState.width / 2 - gameState.racketSize / 2;
+                gameState.p2.right = gameState.width / 2 + gameState.racketSize / 2;
+                gameState.p2.up = gameState.height - 10;
+                gameState.p2.down = gameState.height - 5;
+                gameState.p2.color = "green";
+                gameState.p2.dx = 0;
+                gameState.ai = false;
+                gameState.p2.lkey = 65;
+                gameState.p2.rkey = 68;
+                //z-x
+
+                //Ball
+                gameState.ball = {};
+                gameState.ball.r = 3;
+                gameState.ball.x = gameState.width / 2;
+                gameState.ball.y = gameState.p2.up - gameState.ball.r
+                gameState.ball.dx = Math.random() * 10 - 5;
+                gameState.ball.dy = 1.5;
+                gameState.ball.color = "white";
+            }
+
+            function step() {
+                //Move items
+                gameState.ball.x += gameState.ball.dx;
+                gameState.ball.y += gameState.ball.dy;
+                gameState.p2.left += gameState.p2.dx;
+                gameState.p2.right += gameState.p2.dx;
+
+                // Check left-right wall vs. ball
+                if (gameState.ball.x + gameState.ball.r > gameState.rightEdge)
+                    gameState.ball.dx = -gameState.ball.dx;
+                if (gameState.ball.x - gameState.ball.r < gameState.leftEdge)
+                    gameState.ball.dx = -gameState.ball.dx;
+                if (gameState.ball.y - gameState.ball.r < gameState.topEdge)
+                    gameState.ball.dy = -gameState.ball.dy;
+                if (gameState.ball.y + gameState.ball.r >= s.height) {
+                    deathPause();
+                    writeOnCanvas('30px Arial', 'You lost. Click Begin to Continue');
+                    if (gameState.interval)
+                        clearInterval(gameState.interval);
+                }
+
+                // Check left-right wall vs. racket
+
+                if (gameState.p2.right > gameState.rightEdge) {
+                    gameState.p2.right = gameState.rightEdge;
+                    gameState.p2.left = gameState.p2.right - gameState.racketSize;
+                }
+                if (gameState.p2.left < gameState.leftEdge) {
+                    gameState.p2.left = gameState.leftEdge;
+                    gameState.p2.right = gameState.p2.left + gameState.racketSize;
+                }
+
+                //Check lower racket
+                if (gameState.ball.y + gameState.ball.r > gameState.p2.up && gameState.ball.x + gameState.ball.r > gameState.p2.left && gameState.ball.x - gameState.ball.r < gameState.p2.right) {
+                    gameState.ball.dy = -gameState.ball.dy;
+                    gameState.ball.dx = 3 * (gameState.ball.x - gameState.p2.left - gameState.racketSize / 2) / gameState.racketSize;
+                }
+            }
+
+            function redraw() {
+
+                //Draw playing area
+                s.ctx.fillStyle = "white";
+                clearCanvas();
+
+                s.ctx.fillStyle = "gray";
+                s.ctx.fillRect(0, 0, gameState.leftEdge, s.height);
+                s.ctx.fillRect(gameState.rightEdge, 0, gameState.leftEdge, s.height);
+                s.ctx.fillRect(0, 0, s.width, gameState.topEdge);
+
+                //Draw rackets
+                s.ctx.fillStyle = gameState.p2.color;
+                s.ctx.fillRect(gameState.p2.left, gameState.p2.up, gameState.racketSize, 5);
+
+                //Draw ball
+                s.ctx.fillStyle = 'red';
+                s.ctx.beginPath();
+                s.ctx.arc(gameState.ball.x, gameState.ball.y, gameState.ball.r, 0, 2 * Math.PI);
+                s.ctx.fill();
+                // Draw bricks
+                s.draw();
+                s.checkBoundaries();
+
+                if (gameState.status === 'deathPause')
+                	writeOnCanvas('30px Arial', 'You lost. Click Begin to Continue');
+
+            }
+
+            window.onkeydown = function readKey(e) {
+                switch (e.keyCode) {
+                case gameState.p2.lkey:
+                    gameState.p2.dx = -2;
+                    return false;
+                case gameState.p2.rkey:
+                    gameState.p2.dx = 2;
+                    return false;
+                }
+            }
+
+            window.onkeyup = function releaseKey(e) {
+                switch (e.keyCode) {
+                case gameState.p2.lkey:
+                case gameState.p2.rkey:
+                    gameState.p2.dx = 0;
+                    return false;
+                }
+            }
+
+            function CanvasState(canvas) {
+                this.boundingClientRect = canvas.getBoundingClientRect();
+                this.canvas = canvas;
+                this.width = canvas.width;
+                this.height = canvas.height;
+                this.ctx = canvas.getContext("2d");
+                this.elems = [];
+            }
+
+            CanvasState.prototype.getX = function() {
+                this.boundingClientRect = canvas.getBoundingClientRect();
+                return this.boundingClientRect.x;
+            }
+
+            CanvasState.prototype.getY = function() {
+                this.boundingClientRect = canvas.getBoundingClientRect();
+                return this.boundingClientRect.y;
+            }
+
+            CanvasState.prototype.draw = function() {
+                for (var i = 0; i < this.elems.length; i++) {
+                    this.elems[i].draw();
+                }
+            }
+            ;
+
+            CanvasState.prototype.checkBoundaries = function() {
+                for (var i = 0; i < this.elems.length; i++) {
+                    this.elems[i].checkBoundary(i);
+                }
+            }
+
+            CanvasState.prototype.addElem = function(node) {
+                tag = node.nodeName;
+                color = node.attributes[0].value
+                left = parseFloat(node.attributes[1].value) + 5;
+                topN = parseFloat(node.attributes[2].value) + 5;
+                right = parseFloat(node.attributes[3].value) + 5
+                bottom = parseFloat(node.attributes[4].value) + 5
+
+                switch (tag) {
+                case 'brick':
+                    this.elems.push(new Tool(new Brick(color,left,topN,right,bottom)));
+                    break;
+                case 'wall':
+                    this.elems.push(new Tool(new Wall(color,left,topN,right,bottom)));
+                    break;
+                default:
+                    console.log('Type of element invalid');
+                    break;
+                }
+            }
+            ;
+
+            CanvasState.prototype.removeBrick = function(index) {
+                if (this.elems[index].tool.type === 'brick') {
+                    this.elems.splice(index, 1);
+                    document.getElementById("w2").value = Number(document.getElementById("w2").value) - 1;
+                }
+            }
+            ;
+
+            CanvasState.prototype.getNumBricks = function() {
+                var count = 0;
+                for (var i = 0; i < this.elems.length; i++) {
+                    if (this.elems[i].tool.type === 'brick') {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            function load(flag) {
+                var fname = document.getElementById("filename").value;
+
+                if (fname !== '') {
+
+                    xhttp = new XMLHttpRequest();
+
+                    xhttp.onreadystatechange = function() {
+                        // console.log('Status: ' + this.status + ', readyState: ' + this.readyState);
+                        if (this.readyState == 4 && this.status == 200) {
+                            clearCanvas();
+                            if (flag)
+                                document.getElementById('w1').value = 0;
+                            s.elems = [];
+                            clearCanvas();
+
+                            var width = parseFloat(xhttp.responseXML.firstChild.getAttribute('width'));
+                            var height = parseFloat(xhttp.responseXML.firstChild.getAttribute('height'));
+
+                            document.getElementById('mycanvas1').width = width + 10;
+                            document.getElementById('mycanvas1').height = height + 5;
+
+                            s.width = width + 10;
+                            s.height = height + 5;
+
+                            displayFile(xhttp.responseXML.childNodes[0]);
+                            document.getElementById("w2").value = s.getNumBricks();
+
+                            gameState.status = 'running';
+                            init();
+                            step();
+                            redraw();
+                            if (flag || flag === undefined) {
+                                writeOnCanvas('24px Arial', 'Click Begin to start (A and D to move)');
+                            }
+                            pause();
+                        }
+                    }
+
+                    xhttp.open("GET", fname, false);
+                    xhttp.send();
+                }
+            }
+
+            function displayFile(xmlResponse) {
+                shapes = xmlResponse.getElementsByTagName('*');
+
+                for (var i = 0; i < shapes.length; i++) {
+                    s.addElem(shapes[i]);
+                }
+            }
+
+            /* BRICK */
+
+            function Brick(color, left, topN, right, bottom) {
+                this.type = 'brick';
+                this.color = color;
+                this.left = left < right ? left : right;
+                this.topN = topN < bottom ? topN : bottom;
+                this.right = right > left ? right : left;
+                this.bottom = bottom > topN ? bottom : topN;
+            }
+
+            Brick.prototype.getWidth = function() {
+                return Math.abs(this.right - this.left);
+            }
+
+            Brick.prototype.getHeight = function() {
+                return Math.abs(this.bottom - this.topN);
+            }
+
+            Brick.prototype.draw = function() {
+                s.ctx.strokeStyle = this.color;
+
+                s.ctx.lineWidth = 3;
+
+                // s.ctx.strokeRect(left, topN, right, bottom);
+
+                s.ctx.strokeRect(this.left, this.topN, this.right - this.left, this.bottom - this.topN);
+            }
+
+            /* WALL */
+
+            function Wall(color, left, topN, right, bottom) {
+                this.type = 'wall';
+                this.color = color;
+                this.left = left < right ? left : right;
+                this.topN = topN < bottom ? topN : bottom;
+                this.right = right > left ? right : left;
+                this.bottom = bottom > topN ? bottom : topN;
+            }
+
+            Wall.prototype.draw = function() {
+                s.ctx.strokeStyle = color;
+                s.ctx.fillStyle = color;
+
+                s.ctx.lineWidth = 3;
+
+                s.ctx.fillRect(this.left, this.topN, this.right - this.left, this.bottom - this.topN);
+            }
+
+            /* TOOL */
+            function Tool(tool) {
+                this.tool = tool;
+                this.entropy = true;
+            }
+
+            Tool.prototype.draw = function() {
+                this.tool.draw();
+            }
+            ;
+
+            Tool.prototype.hitFromLeft = function() {
+
+                // console.log('Ball: (' + gameState.ball.x + ', ' + gameState.ball.y + ')');
+                // console.log('This. Left: ' + this.left + ', Top: ' + this.topN + ', Right: ' + this.right + ' Bottom: ' + this.bottom);
+                hitFromLeft = gameState.ball.x + gameState.ball.r > this.left && gameState.ball.x < this.left + gameState.ball.r && gameState.ball.y + gameState.ball.r > this.topN && gameState.ball.y - gameState.ball.r < this.bottom && gameState.ball.dx > 0;
+                // console.log('hitFromLeft: ' + hitFromLeft);
+                return hitFromLeft;
+            }
+
+            Tool.prototype.hitFromRight = function() {
+
+                hitFromRight = gameState.ball.x - gameState.ball.r < this.right && gameState.ball.x > this.right - gameState.ball.r && gameState.ball.y + gameState.ball.r > this.topN && gameState.ball.y - gameState.ball.r < this.bottom && gameState.ball.dx < 0;
+                // console.log('hitFromRight: ' + hitFromRight);
+                return hitFromRight;
+            }
+
+            Tool.prototype.hitFromTop = function() {
+                hitFromTop = gameState.ball.y + gameState.ball.r > this.topN && gameState.ball.y < this.topN + gameState.ball.r && gameState.ball.x + gameState.ball.r > this.left && gameState.ball.x - gameState.ball.r < this.right && gameState.ball.dy > 0;
+                // console.log('hitFromTop: ' + hitFromTop);
+                return hitFromTop;
+            }
+
+            Tool.prototype.hitFromBottom = function() {
+                hitFromBottom = gameState.ball.y - gameState.ball.r < this.bottom && gameState.ball.y > this.bottom - gameState.ball.r && gameState.ball.x + gameState.ball.r > this.left && gameState.ball.x - gameState.ball.r < this.right && gameState.ball.dy < 0;
+                // console.log('hitFromBottom: ' + hitFromBottom);
+                return hitFromBottom;
+            }
+
+            Tool.prototype.ballInsideBrick = function() {
+                return this.hitFromBottom.call(this.tool) || this.hitFromTop.call(this.tool) || this.hitFromLeft.call(this.tool) || this.hitFromRight.call(this.tool);
+            }
+            ;
+
+            Tool.prototype.checkBoundary = function(index) {
+                dirsChanged = 0;
+
+                if (this.hitFromBottom.call(this.tool) || this.hitFromTop.call(this.tool)) {
+                    gameState.ball.dy = -gameState.ball.dy
+                    dirsChanged++;
+                }
+
+                if (this.hitFromLeft.call(this.tool) || this.hitFromRight.call(this.tool)) {
+                    gameState.ball.dx = -gameState.ball.dx
+                    dirsChanged++;
+                }
+
+                if (dirsChanged > 0) {
+                    s.removeBrick(index);
+                }
+
+                if (dirsChanged === 2) {
+                    if (Math.random() > 0.5) {
+                        gameState.ball.dx += 0.05;
+                        gameState.ball.dy += 0.05;
+                    } else {
+                        gameState.ball.dx -= 0.05;
+                        gameState.ball.dy -= 0.05;
+                    }
+                    this.entropy = !this.entropy;
+                }
+
+                if (s.getNumBricks() == 0) {
+                    winCondition();
+                }
+
+            }
+            ;
+
+            function clearCanvas() {
+                s.ctx.clearRect(0, 0, s.width, s.height);
+            }
+
+        </script>
+        Arkanoid! <br/>
+        <canvas id="mycanvas1" width="500" height="500">This is not supported!</canvas>
+        <br/>
+        <input type="button" value="Begin!" onclick="initAlt(false);"/>
+        <br/>
+        Statistics:
+
+        <table>
+            <tr>
+                <td>Lives Lost: </td>
+                <td>
+                    <input type="text" readonly="readonly" id="w1" value="0"/>
+                </td>
+            </tr>
+            <tr>
+                <td>Bricks Remaining: </td>
+                <td>
+                    <input type="text" readonly="readonly" id="w2" value="0"/>
+                </td>
+            </tr>
+            <tr>
+                <td>Level File: </td>
+                <td>
+                    <input id="filename"/>
+                    <button value="" onclick="load(true);">Load</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button value="" onclick="resume();">Resume</button>
+                    <button value="" onclick="pause();">Pause</button>
+                </td>
+            </tr>
+        </table>
+    </body>
 </html>
