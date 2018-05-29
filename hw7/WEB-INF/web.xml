@@ -1,0 +1,10 @@
+<web-app>
+<servlet>
+<servlet-name>Paint</servlet-name>
+<servlet-class>Paint</servlet-class>
+</servlet>
+<servlet-mapping>
+	<servlet-name>Paint</servlet-name>
+	<url-pattern>/paint</url-pattern>
+</servlet-mapping>
+</web-app>
